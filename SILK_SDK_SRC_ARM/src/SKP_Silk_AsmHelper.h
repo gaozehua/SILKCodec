@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -82,7 +82,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _Q14 14
 #define _Q15 15
 
-
+#if defined (_WINRT)
+#else
 #if defined (IPHONE)
 #define MACRO			.macro
 #define END_MACRO		.endmacro
@@ -145,4 +146,35 @@ MACRO CHECK_ABS	ARG0_in, ARG1_in
 END_MACRO
 #endif
 
+MACRO VARDEF ARG0_in, ARG1_in
+ARG0	.req	ARG1
+END_MACRO
+
+MACRO VARDEFD ARG0_in, ARG1_in
+ARG0	.req	ARG1
+END_MACRO
+	
+MACRO VARDEFQ ARG0_in, ARG1_in
+ARG0	.req	ARG1
+END_MACRO
+
+MACRO END
+END_MACRO
+
+MACRO EXTERN ARG0_in
+END_MACRO
+
+MACRO ALIGN ARG0_in
+.align ARG0
+END_MACRO
+
+MACRO DATA
+.data
+END_MACRO
+
+MACRO EXPORT ARG0_in
+.globl ARG0
+END_MACRO
+
+#endif
 #endif

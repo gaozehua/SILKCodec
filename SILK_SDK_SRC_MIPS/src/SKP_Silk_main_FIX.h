@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -162,6 +162,16 @@ void SKP_Silk_find_LPC_FIX(
     const SKP_int       LPC_order,              /* I    LPC order                                                                   */
     const SKP_int16     x[],                    /* I    Input signal                                                                */
     const SKP_int       subfr_length            /* I    Input signal subframe length including preceeding samples                   */
+);
+
+void SKP_Silk_warped_LPC_analysis_filter_FIX(
+          SKP_int32                 state[],            /* I/O  State [order + 1]                       */
+          SKP_int16                 res[],              /* O    Residual signal [length]                */
+    const SKP_int16                 coef_Q13[],         /* I    Coefficients [order]                    */
+    const SKP_int16                 input[],            /* I    Input signal [length]                   */
+    const SKP_int16                 lambda_Q16,         /* I    Warping factor                          */
+    const SKP_int                   length,             /* I    Length of input signal                  */
+    const SKP_int                   order               /* I    Filter order (even)                     */
 );
 
 void SKP_Silk_LTP_analysis_filter_FIX(

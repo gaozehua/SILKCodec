@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -25,28 +25,26 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
 
-#if defined(__arm__)
-
 #include "SKP_Silk_AsmPreproc.h"
 
 
 #if ( EMBEDDED_ARM >= 6 )
-ptr_state	.req	r0
-ptr_res		.req	r1
-val_tmp2	.req	r1
-val_state0	.req	r1
-ptr_coef	.req	r2
-ptr_input	.req	r3
-val_tmp 	.req	r3
-val_lambda	.req	r4
-val_state1	.req	r5
-val_state2	.req	r6
-val_tmp1	.req	_r7
-val_coef	.req	r8
-val_input	.req	sb
-val_acc		.req	sl
-val_order	.req	ip
-val_length	.req	lr
+	VARDEF ptr_state, r0
+	VARDEF ptr_res, r1
+	VARDEF val_tmp2, r1
+	VARDEF val_state0, r1
+	VARDEF ptr_coef, r2
+	VARDEF ptr_input, r3
+	VARDEF val_tmp, r3
+	VARDEF val_lambda, r4
+	VARDEF val_state1, r5
+	VARDEF val_state2, r6
+	VARDEF val_tmp1, _r7
+	VARDEF val_coef, r8
+	VARDEF val_input, sb
+	VARDEF val_acc, sl
+	VARDEF val_order, ip
+	VARDEF val_length, lr
 
 
 .set	sp_state_ptr, 0 
@@ -72,7 +70,7 @@ SYM(SKP_Silk_warped_LPC_analysis_filter_FIX):
 	ldr	val_length, [sp, #ptr_length]
 
 /*OUTTER_LOOP*/
-1:
+L(1)
 	ldmia	ptr_state, {val_state0, val_state1, val_state2}
 	ldrsh	val_input, [ptr_input], #2
 	ldrh	val_coef, [ptr_coef], #2
@@ -88,7 +86,7 @@ SYM(SKP_Silk_warped_LPC_analysis_filter_FIX):
 	sub	val_order, val_order, #2
 	
 /*INNER_LOOP*/
-0:
+L(0)
 	ldrh	val_coef, [ptr_coef], #2	
 	ldr	val_state1, [ptr_state, #4]
 	str	val_tmp1, [ptr_state], #4
@@ -103,7 +101,7 @@ SYM(SKP_Silk_warped_LPC_analysis_filter_FIX):
 	smlawb	val_acc, val_tmp2, val_coef, val_acc
 	sub	val_tmp, val_state2, val_tmp2
 	smlawb	val_tmp1, val_tmp, val_lambda, val_state1
-	bgt	0b
+	bgt	LR(0, b)
 
 	str	val_tmp1, [ptr_state]
 	ldrh	val_coef, [ptr_coef], #2
@@ -121,11 +119,10 @@ SYM(SKP_Silk_warped_LPC_analysis_filter_FIX):
 	strh	val_input, [ptr_res], #2
 	subs	val_length, val_length, #1
 	str	ptr_res, [sp, #sp_res_ptr]
-	bgt	1b
+	bgt	LR(1, b)
 
 	add		sp, sp, #16
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
+	END
 
-
-#endif
 #endif

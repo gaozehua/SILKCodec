@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -53,7 +53,7 @@ typedef struct {
 /********************************/
 typedef struct {
     SKP_int16   sLTP_shp[ LTP_BUF_LENGTH ];
-    SKP_int32   sAR_shp[ MAX_SHAPE_LPC_ORDER + 1 ];
+    SKP_int32   sAR_shp[ MAX_SHAPE_LPC_ORDER + 1 ]; // Q14
     SKP_int     sLTP_shp_buf_idx;
     SKP_int32   sLF_AR_shp_Q12;
     SKP_int32   sLF_MA_shp_Q12;
@@ -86,12 +86,10 @@ typedef struct {
     SKP_Silk_shape_state_FIX        sShape;                         /* Shape state                                                          */
     SKP_Silk_prefilter_state_FIX    sPrefilt;                       /* Prefilter State                                                      */
     SKP_Silk_predict_state_FIX      sPred;                          /* Prediction state                                                     */
-    SKP_Silk_nsq_state              sNSQ;                           /* Noise Shape Quantizer State                                          */
-    SKP_Silk_nsq_state              sNSQ_LBRR;                      /* Noise Shape Quantizer State ( for low bitrate redundancy )           */
 
     /* Buffer for find pitch and noise shape analysis */
     SKP_DWORD_ALIGN SKP_int16 x_buf[ 2 * MAX_FRAME_LENGTH + LA_SHAPE_MAX ];
-    SKP_int                         LTPCorr_Q15;                    /* Normalized correlation from pitch lag estimator                      */
+    SKP_int                         LTPCorr_Q15;                    /* Normalized correlation from pitch lag estimator, approx Q15          */
     SKP_int                         mu_LTP_Q8;                      /* Rate-distortion tradeoff in LTP quantization                         */
     SKP_int32                       SNR_dB_Q7;                      /* Quality setting                                                      */
     SKP_int32                       avgGain_Q16;                    /* average gain during active speech                                    */

@@ -1,7 +1,7 @@
 #					
 # Makefile for Silk SDK			
 #
-# Copyright (c) 2009, Skype Limited
+# Copyright (c) 2012, Skype Limited
 # All rights reserved.
 #
 

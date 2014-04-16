@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -43,7 +43,7 @@ SKP_int SKP_Silk_decode_frame(
 )
 {
     SKP_Silk_decoder_control sDecCtrl;
-    SKP_int         L, fs_Khz_old, LPC_order_old, ret = 0;
+    SKP_int         L, fs_Khz_old, ret = 0;
     SKP_int         Pulses[ MAX_FRAME_LENGTH ];
 
 
@@ -62,7 +62,6 @@ SKP_int SKP_Silk_decode_frame(
         /* Initialize arithmetic coder              */
         /********************************************/
         fs_Khz_old    = psDec->fs_kHz;
-        LPC_order_old = psDec->LPC_order;
         if( psDec->nFramesDecoded == 0 ) {
             /* Initialize range decoder state */
             SKP_Silk_range_dec_init( &psDec->sRC, pCode, nBytes );

@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -105,8 +105,6 @@ typedef struct {
     SKP_Silk_shape_state_FLP            sShape;                     /* Noise shaping state */
     SKP_Silk_prefilter_state_FLP        sPrefilt;                   /* Prefilter State */
     SKP_Silk_predict_state_FLP          sPred;                      /* Prediction State */
-    SKP_Silk_nsq_state                  sNSQ;                       /* Noise Shape Quantizer State */
-    SKP_Silk_nsq_state                  sNSQ_LBRR;                  /* Noise Shape Quantizer State ( for low bitrate redundancy )*/
 
     /* Buffer for find pitch and noise shape analysis */
     SKP_float                           x_buf[ 2 * MAX_FRAME_LENGTH + LA_SHAPE_MAX ];/* Buffer for find pitch and noise shape analysis */

@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -106,13 +106,13 @@ int main(int argc, char* argv[])
     SKP_float c, refWhtnd, testWhtnd, refNrg, diffNrg;
     double    SNR = 0.0;
     SKP_int16 refIn[WIN_LENGTH_MS * MAX_FS_KHZ], testIn[WIN_LENGTH_MS * MAX_FS_KHZ];
-    SKP_float refWin[WIN_LENGTH_MS * MAX_FS_KHZ], testWin[WIN_LENGTH_MS * MAX_FS_KHZ];
+    SKP_float refWin[WIN_LENGTH_MS * MAX_FS_KHZ];
     SKP_float autoCorr[LPC_ORDER + 1], LPC_Coef[LPC_ORDER];
 
     if (argc < 3) {
         print_usage(argv);
         exit(0);
-    } 
+    }
 
     /* get arguments */
     args = 1;
@@ -183,7 +183,6 @@ int main(int argc, char* argv[])
         for( n = 0; n < WIN_LENGTH_MS * Fs_kHz; n++ ) {
             c = (SKP_float)sin( 3.14159265 * (n + 1) / (WIN_LENGTH_MS * Fs_kHz + 1) );
             refWin[n]  = refIn[n]  * c;
-            testWin[n] = testIn[n] * c;
         }
 
         /* LPC analysis on reference signal */

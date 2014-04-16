@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -80,7 +80,7 @@ void SKP_Silk_NSQ(
     const SKP_int                   LTP_scale_Q14                               /* I    LTP state scaling                   */
 )
 {
-    SKP_int     k, lag, start_idx, subfr_length, LSF_interpolation_flag;
+    SKP_int     k, lag, start_idx, LSF_interpolation_flag;
     const SKP_int16 *A_Q12, *B_Q14, *AR_shp_Q13;
     SKP_int16   *pxq;
     SKP_int32   sLTP_Q16[ 2 * MAX_FRAME_LENGTH ];
@@ -89,8 +89,6 @@ void SKP_Silk_NSQ(
     SKP_int     offset_Q10;
     SKP_int32   FiltState[ MAX_LPC_ORDER ];
     SKP_int32   x_sc_Q10[ MAX_FRAME_LENGTH / NB_SUBFR ];
-
-    subfr_length = psEncC->frame_length / NB_SUBFR;
 
     NSQ->rand_seed  =  psEncCtrlC->Seed;
     /* Set unvoiced lag to the previous one, overwrite later for voiced */

@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -30,40 +30,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SKP_Silk_AsmPreproc.h"
 #if EMBEDDED_ARM>=6
 
-ptr_rc				.req	r4
-ptr_C0				.req	r3
-val_C0				.req	_r7
+	VARDEF ptr_rc, r4
+	VARDEF ptr_C0, r3
+	VARDEF val_C0, _r7
 
-ptr_C1				.req	_r7
-val_a32				.req	r0
-val_b32				.req	r1
-val_a32_tmp			.req	r2
-val_b32_tmp			.req	r3
-a_headrm			.req	r0
-b_headrm			.req	r1
+	VARDEF ptr_C1, _r7
+	VARDEF val_a32, r0
+	VARDEF val_b32, r1
+	VARDEF val_a32_tmp, r2
+	VARDEF val_b32_tmp, r3
+	VARDEF a_headrm, r0
+	VARDEF b_headrm, r1
 
 
-a32_nrm				.req	sb
-b32_nrm				.req	sl
-headrm_tmp			.req	r8
-result				.req	r1
-tmp0				.req	r2
-lshift				.req	r3
+	VARDEF a32_nrm, r5
+	VARDEF b32_nrm, sl
+	VARDEF headrm_tmp, r8
+	VARDEF result, r1
+	VARDEF tmp0, r2
+	VARDEF lshift, r3
 
-rc_tmp_Q31			.req	r0
-tmp1				.req	r1
-val_rc				.req	r2
+	VARDEF rc_tmp_Q31, r0
+	VARDEF tmp1, r1
+	VARDEF val_rc, r2
 
-ptr_C2				.req	r8
-ptr_C3				.req	sb
-val_C2				.req	r1
-val_C3				.req	r2
-out_C2				.req	r5
-out_C3				.req	sl
+	VARDEF ptr_C2, r8
+	VARDEF ptr_C3, sb
+	VARDEF val_C2, r1
+	VARDEF val_C3, r2
+	VARDEF out_C2, r5
+	VARDEF out_C3, sl
 
-order1				.req	r6
-order2				.req	r3
+	VARDEF order1, r6
+	VARDEF order2, r3
 
+	EXTERN SYM(SKP_DIV32_arm)
 .set	sp_ptr_C, 0 
 .globl	SYM(SKP_Silk_schur64)
 SYM(SKP_Silk_schur64):
@@ -76,16 +77,16 @@ SYM(SKP_Silk_schur64):
 	
 	mov		ptr_C0, sp
 	ldr		val_C0, [r1], #4
-0:
+L(0)
 	subs	r2, r2, #1
 	str		val_C0, [ptr_C0], #4
 	str		val_C0, [ptr_C0], #4
 	ldr		val_C0, [r1], #4
-	bgt		0b
+	bgt		LR(0, b)
 	str		val_C0, [ptr_C0], #4
 	str		val_C0, [ptr_C0], #4
 	add		ptr_C1, sp, #8
-1:
+L(1)
 	ldr		val_a32, [ptr_C1], #8
 	ldr		val_b32, [sp, #4]
 	rsb		val_a32, val_a32, #0				/*-C[k + 1][0]*/
@@ -106,7 +107,13 @@ SYM(SKP_Silk_schur64):
 	mvn		r0, #0x80000000						/*r0 = 0x7FFF FFFF*/
 	mov		r1, b32_nrm, asr #16				/*SKP_RSHIFT(b32_nrm, 16)*/
 	mov		r0, r0, asr #2
-	bl		SYM(__aeabi_idiv)
+//      registers need to preserve: ptr_rc  (r4)
+//                                  a32_nrm (r5)
+//                                  order1  (r6)
+//                                  ptr_C1  (r7)
+//                                  headrm_tmp (r8)
+//                                  b32_nrm (sl)
+    bl		SYM(SKP_DIV32_arm)
 	smulwb	result, a32_nrm, r0					/*result = SKP_SMULWB(a32_nrm, b32_inv);*/
 	
 	smmul	tmp0, b32_nrm, result				/*SKP_SMMUL(b32_nrm, result)*/
@@ -115,8 +122,17 @@ SYM(SKP_Silk_schur64):
 	
 	subs	lshift, headrm_tmp, #2				/*lshift= 29 + a_headrm - b_headrm - Qres;*/
 	rsble	lshift, lshift, #0
+#ifdef _WINRT
+	bgt		LR(3, f)
+	mov		rc_tmp_Q31, result, lsl lshift
+	b		LR(4, f)
+L(3)	
+	mov		rc_tmp_Q31, result, asr lshift
+L(4)	
+#else	
 	movle	rc_tmp_Q31, result, lsl lshift
 	movgt	rc_tmp_Q31, result, asr lshift
+#endif	
 	
 	mov		tmp1, rc_tmp_Q31, asr #14			/*SKP_RSHIFT_ROUND( rc_tmp_Q31, 15 )*/
 	add		val_rc, tmp1, #1
@@ -126,7 +142,7 @@ SYM(SKP_Silk_schur64):
 	mov		order2, order1						/*order-k*/
 	sub		ptr_C2, ptr_C1, #8					/*r8 = &C[k+1][0]*/
 	add		ptr_C3, sp, #4						/*sb = &C[0][1]*/
-2:	
+L(2)	
 	ldr		val_C2, [ptr_C2]
 	ldr		val_C3, [ptr_C3]
 	subs	order2, order2, #1
@@ -138,15 +154,15 @@ SYM(SKP_Silk_schur64):
 	add		out_C3, out_C3, val_C2
 	str		out_C2, [ptr_C3], #8
 	str		out_C3, [ptr_C2], #8
-	bgt		2b
+	bgt		LR(2, b)
 	subs	order1, order1, #1
-	bgt		1b
+	bgt		LR(1, b)
 		
 	ldr		r0, [sp, #4]						/*r0 = C[0][1]*/
 
 	add		sp, sp, #136
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
-	
+	END	
 #endif
 
 #endif

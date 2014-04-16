@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -274,6 +274,6 @@ void SKP_Silk_SDK_get_TOC(
 /* Return a pointer to string specifying the version */ 
 const char *SKP_Silk_SDK_get_version()
 {
-    static const char version[] = "1.0.8";
+    static const char version[] = "1.0.9";
     return version;
 }

@@ -1,10 +1,10 @@
 ************************************************************************
-Floating Point SILK SDK 1.0.8 beta source code package
-Copyright 2010 (c), Skype Limited
+Floating Point SILK SDK 1.0.9 source code package
+Copyright 2012 (c), Skype Limited
 https://developer.skype.com/silk/
 ************************************************************************
 
-Date: 15/06/2011 (Format: DD/MM/YYYY)
+Date: 03/08/2012 (Format: DD/MM/YYYY)
 
 I. Description
 
@@ -13,7 +13,9 @@ point SILK SDK library. The following is included in this package:
 
     o Source code for the floating point SILK SDK library
     o Source code for creating encoder and decoder executables
-    o Microsoft Visual Studio solution and project files
+    o Test vectors
+    o Comparison tool
+    o Microsoft Visual Studio solutions and project files
     o Makefile for GNU C-compiler (GCC)
     
 II. Files and Folders
@@ -22,9 +24,11 @@ II. Files and Folders
     o interface/    - contains API header files
     o src/          - contains all SILK SDK library source files
     o test/         - contains source files for testing the SILK SDK
+    o test_vectors/ - contains test vectors   
     o Makefile      - Makefile for compiling with GCC
     o readme.txt    - this file
-    o Silk_SDK.sln  - Visual Studio solution for all SILK SDK code
+    o Silk_SDK.sln  - Visual Studio 2010 solution for all SILK SDK code
+    o Silk_SDK_VS2005.sln - Visual Studio 2005 solution for all SILK SDK code
 
 III. How to use the Makefile
 
@@ -57,6 +61,7 @@ III. How to use the Makefile
 
 IV. History
 
+    Version 1.0.9 - Added 64-bit support. Added iOS LLVM compiler support. Lowered DTX mode bitrate. Bugfixes for ARM builds. Various other small fixes.
     Version 1.0.8 - Improved noise shaping, various other improvements, and various bugfixes. Added a MIPS version
     Version 1.0.7 - Updated with bugfixes for LBRR and pitch estimator. SignalCompare updated
     Version 1.0.6 - Updated with bugfixes for ARM builds
@@ -72,11 +77,11 @@ V. Compatibility
 
     This package has been tested on the following platforms:
 
-    Windows XP Home and Professional
-    Windows Vista, 32-bit version
-    Mac OS X intel
-    Mac OS X ppc
-    Ubuntu Linux 9.10, 64-bit version 
+    Windows 7 Professional,  32-bit version, Intel Core i7 CPU
+    Windows 7 Professional,  64-bit version, Intel Core i7 CPU
+    Mac OS X Version 10.7.4, 64-bit version, Intel Core i7 CPU
+    Ubuntu Linux 10.04 LTS,  32-bit version, Intel Core i7 CPU
+    Ubuntu Linux 12.04 LTS,  64-bit version, Intel Core 2 Duo CPU
 
 VI. Known Issues
 

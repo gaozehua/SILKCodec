@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="SKP_Silk_FIX_Win32_debug.lib"
+				OutputFile="SKP_Silk_FLP_Win32_debug.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -131,7 +131,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="SKP_Silk_FIX_Win32_mt.lib"
+				OutputFile="SKP_Silk_FLP_Win32_mt.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"

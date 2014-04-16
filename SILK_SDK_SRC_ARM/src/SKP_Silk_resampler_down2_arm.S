@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -33,14 +33,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SKP_Silk_resampler_down2_0 0x2690
 #define SKP_Silk_resampler_down2_1 0x9B81
 
-xy0				.req	r4
-xy1				.req	r5
-down2_coefs			.req	_r7
-S_0				.req	r6
-S_1				.req	r8
-in0				.req	sb
-in1				.req	sl
-out32				.req	r0
+	VARDEF xy0, r4
+	VARDEF xy1, r5
+	VARDEF down2_coefs, _r7
+	VARDEF S_0, r6
+	VARDEF S_1, r8
+	VARDEF in0, sb
+	VARDEF in1, sl
+	VARDEF out32, r0
 
 .set	sp_S, 0 
 .globl	SYM(SKP_Silk_resampler_down2)
@@ -58,7 +58,7 @@ SYM(SKP_Silk_resampler_down2):
 	add		down2_coefs, down2_coefs, #0x81		
 	mov		r3, r3, asr #1
 	mov		ip, #1024
-0:
+L(0)
 	add		out32, S_0, S_1
 	rsb		xy0, S_0, in0, lsl #10
 	rsb		xy1, S_1, in1, lsl #10
@@ -72,15 +72,22 @@ SYM(SKP_Silk_resampler_down2):
 	qadd		out32, out32, ip
 	subs		r3, r3, #1
 	ssat		out32, #16, out32, asr #11
+#ifdef	_WINRT
+	ble			LR(1, f)
+	ldrsh		in0, [r2], #2
+	ldrsh		in1, [r2], #2
+L(1)	
+#else	
 	ldrgtsh		in0, [r2], #2
 	ldrgtsh		in1, [r2], #2
+#endif	
 #else
 	qadd		out32, out32, ip
-	cmp		out32, #0x8000000
-	movge		out32, #0x8000000
+	cmp		out32, #0x4000000
+	movge		out32, #0x4000000
 	subge		out32, out32, #1
-	cmn		out32, #0x8000000
-	movlt		out32, #0x8000000
+	cmn		out32, #0x4000000
+	movlt		out32, #0x4000000
 	subs		r3, r3, #1
 	mov		out32, out32, asr #11
 	ldrgtsh		in0, [r2], #2	
@@ -88,12 +95,13 @@ SYM(SKP_Silk_resampler_down2):
 #endif	
 	
 	strh		out32, [r1], #2
-	bgt		0b
+	bgt		LR(0, b)
 
 	ldr		r0, [sp, #sp_S]
 	stmia		r0, {S_0, S_1}
 
 	add		sp, sp, #4
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
+	END
 #endif
 #endif

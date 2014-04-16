@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -31,19 +31,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if EMBEDDED_ARM>=5
 
-len				.req	r0
-S_0				.req	r3
-S_1				.req	r4
-S_2				.req	r5
-S_3				.req	r6
-in				.req	_r7
-out1				.req	r8
-coef01				.req	sb
-coef23				.req	sl
-coef45				.req	ip
-coef6				.req	r8
-coef_tmp			.req	_r7
-out2				.req	lr
+	VARDEF len, r0
+	VARDEF S_0, r3
+	VARDEF S_1, r4
+	VARDEF S_2, r5
+	VARDEF S_3, r6
+	VARDEF in, _r7
+	VARDEF out1, r8
+	VARDEF coef01, sb
+	VARDEF coef23, sl
+	VARDEF coef45, ip
+	VARDEF coef6, r8
+	VARDEF coef_tmp, _r7
+	VARDEF out2, lr
 
 .set	sp_S, 0 
 .set	sp_coef, 4 
@@ -64,7 +64,7 @@ SYM(SKP_Silk_resampler_private_ARMA4):
 	ldrh	coef6, [r3], #2
 	cmp	lr, #0
 	str	r0, [sp, #sp_S]
-	beq	1f			// if len==0
+	beq	LR(1, f)			// if len==0
 	
 	str	coef6, [sp, #sp_coef]
 	ldrsh	in, [r2], #2
@@ -74,7 +74,7 @@ SYM(SKP_Silk_resampler_private_ARMA4):
 	ldmia	r0, {S_0, S_1, S_2, S_3}
 	mov	len, lr	
 	
-0:
+L(0)
 	mov	in, in, lsl #8
 	add	out1, in, S_0, lsl #2
 	add	out2, out1, S_2, lsl #2
@@ -103,13 +103,21 @@ SYM(SKP_Silk_resampler_private_ARMA4):
 #endif
 	subs	len, len, #1
 	strh	out1, [r1], #2
+#ifdef _WINRT
+	ble		LR(1, f)
+	ldrsh	in, [r2], #2
+	b	LR(0, b)
+L(1)	
+#else	
 	ldrgtsh	in, [r2], #2
-	bgt	0b
+	bgt	LR(0, b)
+#endif	
 	
 	ldr	r0, [sp, #sp_S]
 	stmia	r0, {S_0, S_1, S_2, S_3}
-1:	
+L(1)	
 	add		sp, sp, #8
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
+	END
 #endif
 #endif

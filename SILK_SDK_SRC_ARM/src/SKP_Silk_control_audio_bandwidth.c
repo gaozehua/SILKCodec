@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -58,7 +58,7 @@ SKP_int SKP_Silk_control_audio_bandwidth(
         /* State machine for the internal sampling rate switching */
         if( psEncC->API_fs_Hz > 8000 ) {
             /* Accumulate the difference between the target rate and limit for switching down */
-            psEncC->bitrateDiff += SKP_MUL( psEncC->PacketSize_ms, psEncC->TargetRate_bps - psEncC->bitrate_threshold_down );
+            psEncC->bitrateDiff += SKP_MUL( psEncC->PacketSize_ms, TargetRate_bps - psEncC->bitrate_threshold_down );
             psEncC->bitrateDiff  = SKP_min( psEncC->bitrateDiff, 0 );
 
             if( psEncC->vadFlag == NO_VOICE_ACTIVITY ) { /* Low speech activity */
@@ -91,7 +91,7 @@ SKP_int SKP_Silk_control_audio_bandwidth(
 
                 /* Check if we should switch up */
                 if( ( ( psEncC->fs_kHz * 1000 < psEncC->API_fs_Hz ) &&
-                    ( psEncC->TargetRate_bps >= psEncC->bitrate_threshold_up ) && 
+                    ( TargetRate_bps >= psEncC->bitrate_threshold_up ) && 
                     ( psEncC->sSWBdetect.WB_detected * psEncC->fs_kHz < 16 ) ) && 
                     ( ( ( psEncC->fs_kHz == 16 ) && ( psEncC->maxInternal_fs_kHz >= 24 ) ) || 
                     (   ( psEncC->fs_kHz == 12 ) && ( psEncC->maxInternal_fs_kHz >= 16 ) ) ||

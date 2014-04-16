@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -25,34 +25,33 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
 
-#if defined(__arm__)
-
+#if __arm__
 #include "SKP_Silk_AsmPreproc.h"
 
 #if ( EMBEDDED_ARM >= 6 )
 
-val_N		.req	r4
-val_K		.req	r5
-val_order	.req	r6
-val_in_Q15	.req	_r7
-val_cb_Q15	.req	r8
-val_wtmp_Q6	.req	sb
-val_sum_error	.req	sl
-val_diff	.req	ip
-val_tmp		.req	lr
+	VARDEF val_N, r4
+	VARDEF val_K, r5
+	VARDEF val_order, r6
+	VARDEF val_in_Q15, _r7
+	VARDEF val_cb_Q15, r8
+	VARDEF val_wtmp_Q6, sb
+	VARDEF val_sum_error, sl
+	VARDEF val_diff, ip
+	VARDEF val_tmp, lr
 
-val_in_Q15_tmp	.req	ip
-val_wtmp_Q6_tmp	.req	lr
+	VARDEF val_in_Q15_tmp, ip
+	VARDEF val_wtmp_Q6_tmp, lr
 
-ptr_wtmp	.req	_r7
-val0_wtmp	.req	sb
-val1_wtmp	.req	r5
-val2_wtmp	.req	r8
+	VARDEF ptr_wtmp, _r7
+	VARDEF val0_wtmp, sb
+	VARDEF val1_wtmp, r5
+	VARDEF val2_wtmp, r8
 
-ptr_err_Q20	.req	r0
-ptr_in_Q15	.req	r1
-ptr_w_Q6	.req	r2
-ptr_pCB_Q15	.req	r3
+	VARDEF ptr_err_Q20, r0
+	VARDEF ptr_in_Q15, r1
+	VARDEF ptr_w_Q6, r2
+	VARDEF ptr_pCB_Q15, r3
 
 .set	sp_wtmp, 0 
 .set	sp_err_Q20, 32 
@@ -79,30 +78,30 @@ SYM(SKP_Silk_NLSF_VQ_sum_error_FIX):
 	ldr	val2_wtmp, [r2], #4
 	sub	val_order, val_order, #2
 	add	ptr_wtmp, sp, #sp_wtmp
-3:
+L(3)
 	pkhbt	val0_wtmp, val1_wtmp, val2_wtmp, lsl #16
 	subs	val_order, val_order, #2
 	ldr	val1_wtmp, [r2], #4
 	ldr	val2_wtmp, [r2], #4
 	str	val0_wtmp, [ptr_wtmp], #4
-	bgt	3b
+	bgt	LR(3, b)
 	pkhbt	val0_wtmp, val1_wtmp, val2_wtmp, lsl #16
 	str	val0_wtmp, [ptr_wtmp], #4
 
 	ands	val_tmp, ptr_pCB_Q15, #3
-	bgt	4f
+	bgt	LR(4, f)
 /*OUTTER_LOOP*/
-2:
+L(2)
 	ldr	ptr_pCB_Q15, [sp, #sp_pCB_Q15]
 	ldr	val_K, [sp, #ptr_K]
 /*MIDDLE_LOOP*/  
-1:
+L(1)
 	ldr	ptr_in_Q15, [sp, #sp_in_Q15]
 	add	ptr_w_Q6, sp, #sp_wtmp
 	ldr	val_order, [sp, #ptr_LPC_order]
 	mov	val_sum_error, #0
 /*INNER_LOOP*/
-0:
+L(0)
 	ldmia	ptr_in_Q15!, {val_in_Q15, val_in_Q15_tmp}
 	ldr	val_wtmp_Q6, [ptr_w_Q6], #4
 	ldr	val_cb_Q15, [ptr_pCB_Q15], #4
@@ -113,28 +112,28 @@ SYM(SKP_Silk_NLSF_VQ_sum_error_FIX):
 	smultt	val_diff, val_diff, val_diff
 	smlawb	val_sum_error, val_tmp, val_wtmp_Q6, val_sum_error
 	smlawt	val_sum_error, val_diff, val_wtmp_Q6, val_sum_error
-	bgt	0b
+	bgt	LR(0, b)
 	subs	val_K, val_K, #1
 	str	val_sum_error, [ptr_err_Q20], #4
-	bgt	1b
+	bgt	LR(1, b)
 	subs	val_N, val_N, #1
 	str	ptr_in_Q15, [sp, #sp_in_Q15]
-	bgt	2b
+	bgt	LR(2, b)
 
 	add		sp, sp, #48
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
 
-4:
+L(4)
 	ldr	ptr_pCB_Q15, [sp, #sp_pCB_Q15]
 	ldr	val_K, [sp, #ptr_K]
 /*MIDDLE_LOOP*/  
-1:
+L(1)
 	ldr	ptr_in_Q15, [sp, #sp_in_Q15]
 	add	ptr_w_Q6, sp, #sp_wtmp
 	ldr	val_order, [sp, #ptr_LPC_order]
 	mov	val_sum_error, #0
 /*INNER_LOOP*/
-0:
+L(0)
 	ldmia	ptr_in_Q15!, {val_in_Q15, val_in_Q15_tmp}
 	ldr	val_wtmp_Q6, [ptr_w_Q6], #4
 	ldrh	val_cb_Q15, [ptr_pCB_Q15], #2
@@ -147,16 +146,16 @@ SYM(SKP_Silk_NLSF_VQ_sum_error_FIX):
 	smultt	val_diff, val_diff, val_diff
 	smlawb	val_sum_error, val_tmp, val_wtmp_Q6, val_sum_error
 	smlawt	val_sum_error, val_diff, val_wtmp_Q6, val_sum_error
-	bgt	0b
+	bgt	LR(0, b)
 	subs	val_K, val_K, #1
 	str	val_sum_error, [ptr_err_Q20], #4
-	bgt	1b
+	bgt	LR(1, b)
 	subs	val_N, val_N, #1
 	str	ptr_in_Q15, [sp, #sp_in_Q15]
-	bgt	4b
+	bgt	LR(4, b)
 
 	add		sp, sp, #48
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
-
+	END
 #endif
 #endif

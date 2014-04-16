@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -30,7 +30,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Worst case: O(n^2) for an inversely sorted array         */
 /*                                                          */
 /* To be implemented:                                       */
-/* Shell short: http://en.wikipedia.org/wiki/Shell_sort     */
 
 #include "SKP_Silk_typedef.h"
 #include "SKP_Silk_SigProc_FLP.h"

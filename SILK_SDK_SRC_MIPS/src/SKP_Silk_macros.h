@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -62,6 +62,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // a32 + ((b32 * c32) >> 16)
 #define SKP_SMLAWW(a32, b32, c32)       SKP_MLA(SKP_SMLAWB((a32), (b32), (c32)), (b32), SKP_RSHIFT_ROUND((c32), 16))
+
+// (SKP_int32)(((SKP_int64)a32 * b32) >> 32)
+#define SKP_SMMUL(a32, b32)             (SKP_int32)SKP_RSHIFT64(SKP_SMULL((a32), (b32)), 32)
 
 /* add/subtract with output saturated */
 #define SKP_ADD_SAT32(a, b)             ((((a) + (b)) & 0x80000000) == 0 ?                              \

@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -48,8 +48,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SKP_Silk_AsmHelper.h"
 
+
 /* Checking compilier __ARMEL__ defines */
-#if !__ARMEL__ && (!defined(NO_ASM))
+#if !__ARMEL__ && (!defined(NO_ASM)) && (!defined(_WINRT))
 #error	Currently SKP_Silk_AsmPreProc only supports little endian.
 // above line can be replaced by 
 // #warning	__ARMEL__=0
@@ -84,10 +85,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ARM_LITTLE_ENDIAN
 #endif
 
-#if __ARM_EABI__ 
-#define SKP_DIV32_arm __aeabi_idiv
-#endif
-
 /* Interfacing some asm directives to macros*/
 #define 	GBL		.globl
 
@@ -111,11 +108,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
+#ifdef _WINRT
+#define L(a)	a
+#define LR(a,d)	%##d##a
 
+#define TABLE(L, symbol) symbol
+#else
+#define L(a) 	a:
+#define LR(a,d)	a##d
+#define DCD	.long
+#define DCW	.short
+#define TABLE(L, symbol) L
+#endif
+
+#ifdef _WINRT
+#define streqh strheq
+#define strneh strhne
+#define strgth strhgt
+#define strlth strhlt
+#define ldrgtsh ldrshgt
+#define ldmgtia ldmiagt
+#define ldmgtdb ldmdbgt
+#define ldrneh ldrhne
+#define ldmltia ldmialt
+#endif
 /*
  *	ASM preprocessor part:
  */
 
+#ifdef _WINRT
+#else
+//	AT&T Format
 #if EMBEDDED_ARM >= 7
 .set	_ARCH, 7
 #elif EMBEDDED_ARM >= 6
@@ -133,6 +156,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 .set	_NEON, 0
 #endif
+
+MACRO	SKP_TABLE  ARG0_in, ARG1_in
+SYM(ARG0):
+END_MACRO
+
 
 
 MACRO SKP_SMLAD	ARG0_in, ARG1_in, ARG2_in, ARG3_in
@@ -177,4 +205,14 @@ MACRO SKP_RSHIFT_ROUND ARG0_in, ARG1_in, ARG2_in
 	.abort "SKP_RSHIFT_ROUND can't be used for armv3 or lower device.."
 #endif
 END_MACRO
+
+MACRO ADD_SHIFT ARG0_in, ARG1_in, ARG2_in, ARG3_in, ARG4_in
+		add ARG0, ARG1, ARG2, ARG3 ARG4
+END_MACRO
+
+MACRO POST_IR 	ARG0_in, ARG1_in, ARG2_in, ARG3_in
+		ARG0 ARG1, [ARG2], ARG3
+END_MACRO
+
+#endif
 #endif //_SKP_ASM_PREPROC_H_

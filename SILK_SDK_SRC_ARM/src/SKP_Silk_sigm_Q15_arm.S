@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -30,20 +30,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SKP_Silk_AsmPreproc.h"
 #if EMBEDDED_ARM>=4
 
-ptr_slope			.req	r6
-ptr_LUT				.req	_r7
-in_Q5				.req	r1
-ind					.req	r2
-val_slope			.req	r5
-val_PUT				.req	r4
-in_Q5_tmp			.req	r3
+	VARDEF ptr_slope, r6
+	VARDEF ptr_LUT, _r7
+	VARDEF in_Q5, r1
+	VARDEF ind, r2
+	VARDEF val_slope, r5
+	VARDEF val_PUT, r4
+	VARDEF in_Q5_tmp, r3
 
 .globl	SYM(SKP_Silk_sigm_Q15)
 SYM(SKP_Silk_sigm_Q15):
 	stmdb	sp!,  {r4-r7, fp, ip, lr}
 	add		fp, sp, #24
 	cmp		r0, #0
-	ldr		ptr_slope, L0
+	ldr		ptr_slope, TABLE(L0, =SKP_Silk_sigm_tab)
 
 	mov		in_Q5, r0
 	rsblt	in_Q5, r0, #0
@@ -54,22 +54,24 @@ SYM(SKP_Silk_sigm_Q15):
 	cmp		in_Q5, #192											/*6*32*/
 	sub		r0, r0, #1
 	
-	bge		1f
+	bge		LR(1, f)
 	mov		ind, in_Q5, asr #5										/*ind*/	
 	mov		ind, ind, lsl #1
 	and		in_Q5_tmp,	in_Q5, #0x1F
 	ldrsh	val_slope, [ptr_slope, ind]										/*sigm_LUT_slope_Q10*/
 	ldrsh	val_PUT, [ptr_LUT, ind]										/*sigm_LUT_pos/neg_Q15*/
 	mla		r0, val_slope, in_Q5_tmp, val_PUT
-1:	
+L(1)	
 	ldmia	sp!,  {r4-r7, fp, ip, pc}
 	
-L0:		.long	SYM(SKP_Silk_sigm_tab)
+L(L0)		
+	DCD	SYM(SKP_Silk_sigm_tab)
 
-SYM(SKP_Silk_sigm_tab):
-.short		237, 153, 73, 30, 12, 7,						\
+	SKP_TABLE SKP_Silk_sigm_tab, 2
+	DCW		237, 153, 73, 30, 12, 7,						\
 			16384, 23955, 28861, 31213, 32178, 32548,		\
 			-237, -153, -73, -30, -12, -7,					\
-			16384, 8812, 3906, 1554, 589, 219	
+			16384, 8812, 3906, 1554, 589, 219
+	END	
 #endif
 #endif

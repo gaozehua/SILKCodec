@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -96,4 +96,7 @@ void SKP_Silk_VQ_WMat_EC_FLP(
         /* Go to next cbk vector */
         cb_row += LTP_ORDER;
     }
+
+    /* If this breaks, we had a floating point wrap-around or similar */
+    SKP_assert( ( *rate_dist ) < SKP_float_MAX );
 }

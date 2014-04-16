@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -30,25 +30,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SKP_Silk_AsmPreproc.h"
 
 #if EMBEDDED_ARM>=5
-out				.req	r1
-ind				.req	r2
-coef0			.req	r3
-coef1			.req	r4
-coef2			.req	r5
+	VARDEF out, r1
+	VARDEF ind, r2
+	VARDEF coef0, r3
+	VARDEF coef1, r4
+	VARDEF coef2, r5
 #ifdef IPHONE
-val0			.req	r6
-val1			.req	r8
-val2			.req	sb
-val3			.req	_r7
+	VARDEF val0, r6
+	VARDEF val1, r8
+	VARDEF val2, sb
+	VARDEF val3, _r7
 #else
-val0			.req	r6
-val1			.req	_r7
-val2			.req	r8
-val3			.req	sb
+	VARDEF val0, r6
+	VARDEF val1, _r7
+	VARDEF val2, r8
+	VARDEF val3, sb
 #endif
-tmpptr			.req	sl
-tmp0			.req	ip
-tmp1			.req	lr
+	VARDEF tmpptr, sl
+	VARDEF tmp0, ip
+	VARDEF tmp1, lr
 
 .set	sp_buf, 0 
 .set	sp_maxi, 4 
@@ -61,7 +61,7 @@ SYM(SKP_Silk_resampler_private_down_FIR_INTERPOL0):
 		cmp		r3, #0
 		str		r1, [sp, #sp_buf]
 		str		r3, [sp, #sp_maxi]
-		ble		1f
+		ble		LR(1, f)
 		ldrh	r3, [r2], #2
 		ldrh	r6, [r2], #2
 		ldrh	r4, [r2], #2
@@ -77,7 +77,7 @@ SYM(SKP_Silk_resampler_private_down_FIR_INTERPOL0):
 		ldr		tmp0, [sp, #sp_inc]
 		ldmia	tmpptr, {val2, val3}		
 		mov		ind, #0
-0:
+L(0)
 		sub		tmpptr, tmpptr, #32
 		add		ind, ind, tmp0	
 		add		tmp0, val0, val3
@@ -106,27 +106,51 @@ SYM(SKP_Silk_resampler_private_down_FIR_INTERPOL0):
 		cmp		out, #0x10000
 		mov		out, out, asr #1
 		ldr		tmp1, [sp, #sp_maxi]
+#ifdef _WINRT
+		ble		LR(2, f)
+		mov		out, #0x8000
+L(2)		
+#else		
 		movgt	out, #0x8000
+#endif		
 		subge	out, out, #1
 		cmn		out, #0x8000
 		ldr		tmp0, [sp, #sp_inc]
+#ifdef _WINRT
+		bge		LR(2, f)
+		mov		out, #0x8000
+L(2)		
+#else		
 		movlt	out, #0x8000
+#endif		
 		cmp		ind, tmp1
+#ifdef _WINRT
+		bge		LR(2, f)
+		ldmia	tmpptr, {val0, val1}
+		strh	out, [r0], #2
+		add		tmpptr, tmpptr, #40
+		ldmia	tmpptr, {val2, val3}
+		b		LR(0, b)
+L(2)
+		strh	out, [r0], #2
+		add		tmpptr, tmpptr, #40
+#else		
 		ldmltia	tmpptr, {val0, val1}
 		strh	out, [r0], #2
 		add		tmpptr, tmpptr, #40
 		ldmltia	tmpptr, {val2, val3}
-		blt		0b
-1:		
+		blt		LR(0, b)
+#endif		
+L(1)		
 	add		sp, sp, #8
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
 
 #ifdef IPHONE
-coefptr			.req	_r7
-bufptr			.req	sl
+	VARDEF coefptr, _r7
+	VARDEF bufptr, sl
 #else
-coefptr			.req	sb
-bufptr			.req	sl
+	VARDEF coefptr, sb
+	VARDEF bufptr, sl
 #endif
 
 .set	sp_buf, 0 
@@ -143,13 +167,13 @@ SYM(SKP_Silk_resampler_private_down_FIR_INTERPOL1):
 		str		r1, [sp, #sp_buf]
 		str		r2, [sp, #sp_coef]
 		str		r3, [sp, #sp_maxi]
-		blt		1f
+		blt		LR(1, f)
 		mov		tmp1, #0xFF00
 		mov		ind, #0
 		add		tmp1, tmp1, #0xFF
 		ldr		coefptr, [sp, #sp_coef]
 		ldr		bufptr, [sp, #sp_buf]
-0:		
+L(0)		
 		ldr		out, [sp, #sp_fir_fracs]
 		mov		tmp0, ind, asr #16
 		add		bufptr, bufptr, tmp0, lsl #2
@@ -191,16 +215,29 @@ SYM(SKP_Silk_resampler_private_down_FIR_INTERPOL1):
 		add		out, out, #1
 		cmp		out, #0x10000
 		mov		out, out, asr #1
+#ifdef _WINRT
+		ble		LR(2, f)
+		mov		out, #0x8000
+L(2)		
+#else		
 		movgt	out, #0x8000
+#endif		
 		subge	out, out, #1
 		cmn		out, #0x8000
+#ifdef _WINRT
+		bge		LR(2, f)
+		mov 	out, #0x8000
+L(2)		
+#else		
 		movlt	out, #0x8000
+#endif		
 		cmp		ind, tmp0
 		strh	out, [r0], #2
-		blt		0b
-1:		
+		blt		LR(0, b)
+L(1)		
 	add		sp, sp, #12
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
+	END
 
 #endif
 #endif

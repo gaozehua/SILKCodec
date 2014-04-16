@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -155,17 +155,17 @@ void SKP_Silk_biquad(
     const SKP_int32      len           /* I:   signal length               */
 );
 /*!
- * second order ARMA filter; 
+ * Second order ARMA filter; 
  * slower than biquad() but uses more precise coefficients
  * can handle (slowly) varying coefficients 
  */
 void SKP_Silk_biquad_alt(
-    const SKP_int16     *in,           /* I:    input signal                 */
+    const SKP_int16     *in,           /* I:    Input signal                 */
     const SKP_int32     *B_Q28,        /* I:    MA coefficients [3]          */
     const SKP_int32     *A_Q28,        /* I:    AR coefficients [2]          */
-    SKP_int32           *S,            /* I/O: state vector [2]              */
-    SKP_int16           *out,          /* O:    output signal                */
-    const SKP_int32     len            /* I:    signal length (must be even) */
+    SKP_int32           *S,            /* I/O:  State vector [2]             */
+    SKP_int16           *out,          /* O:    Output signal                */
+    const SKP_int32     len            /* I:    Signal length (must be even) */
 );
 
 /*! 
@@ -177,7 +177,7 @@ void SKP_Silk_MA_Prediction(
     SKP_int32            *S,           /* I/O: State vector [order]                        */
     SKP_int16            *out,         /* O:   Output signal                               */
     const SKP_int32      len,          /* I:   Signal length                               */
-    const SKP_int32      order         /* I:  Filter order                                 */
+    const SKP_int32      order         /* I:   Filter order                                */
 );
 
 /*!
@@ -253,12 +253,12 @@ void SKP_Silk_ana_filt_bank_1(
 );
 
 /********************************************************************/
-/*                        SCALAR FUNCTIONS                            */
+/*                        SCALAR FUNCTIONS                          */
 /********************************************************************/
 
-/* approximation of 128 * log2() (exact inverse of approx 2^() below) */
-/* convert input to a log scale    */
-SKP_int32 SKP_Silk_lin2log(const SKP_int32 inLin);        /* I: input in linear scale        */
+/* Approximation of 128 * log2() (very close inverse of approx 2^() below) */
+/* Convert input to a log scale    */
+SKP_int32 SKP_Silk_lin2log(const SKP_int32 inLin);        /* I: Input in linear scale        */
 
 /* Approximation of a sigmoid function */
 SKP_int SKP_Silk_sigm_Q15(SKP_int in_Q5);
@@ -284,12 +284,12 @@ void SKP_Silk_sum_sqr_shift(
 
 /* Calculates the reflection coefficients from the correlation sequence    */
 /* Faster than schur64(), but much less accurate.                          */
-/* uses SMLAWB(), requiring armv5E and higher.                             */ 
+/* Uses SMLAWB(), requiring armv5E and higher.                             */ 
 SKP_int32 SKP_Silk_schur(               /* O:    Returns residual energy                   */
     SKP_int16            *rc_Q15,       /* O:    reflection coefficients [order] Q15       */
     const SKP_int32      *c,            /* I:    correlations [order+1]                    */
     const SKP_int32      order          /* I:    prediction order                          */
-);;
+);
 
 /* Calculates the reflection coefficients from the correlation sequence    */
 /* Slower than schur(), but more accurate.                                 */
@@ -319,8 +319,7 @@ void SKP_Silk_k2a_Q16(
 /*    1 -> sine window from 0 to pi/2                                       */
 /*    2 -> sine window from pi/2 to pi                                      */
 /* Every other sample is linearly interpolated, for speed.                  */
-/* Window length must be between 16 and 120 (incl) and a multiple of 4.     */
-void SKP_Silk_apply_sine_window_new(
+void SKP_Silk_apply_sine_window(
     SKP_int16                        px_win[],            /* O    Pointer to windowed signal                  */
     const SKP_int16                  px[],                /* I    Pointer to input signal                     */
     const SKP_int                    win_type,            /* I    Selects a window type                       */
@@ -467,8 +466,19 @@ SKP_int64 SKP_Silk_inner_prod16_aligned_64(
 
 /* Rotate a32 right by 'rot' bits. Negative rot values result in rotating
    left. Output is 32bit int.
-   Note: contemporary compilers recognize the C expression below and
-   compile it into a 'ror' instruction if available. No need for inline ASM! */
+   Note: contemporary compilers recognize the C expressions below and
+   compile them into 'ror' instructions if available. No need for inline ASM! */
+#if defined(EMBEDDED_MIPS)
+/* For MIPS (and most likely for ARM! and >=i486) we don't have to handle
+   negative rot's as only 5 bits of rot are encoded into ROR instructions. */
+SKP_INLINE SKP_int32 SKP_ROR32(SKP_int32 a32, SKP_int rot)
+{
+    SKP_uint32 _x = (SKP_uint32) a32;
+    SKP_uint32 _r = (SKP_uint32) rot;
+    return (SKP_int32) ((_x << (32 - _r)) | (_x >> _r));
+}
+#else
+/* PPC must use this generic implementation. */
 SKP_INLINE SKP_int32 SKP_ROR32( SKP_int32 a32, SKP_int rot )
 {
     SKP_uint32 x = (SKP_uint32) a32;
@@ -479,10 +489,15 @@ SKP_INLINE SKP_int32 SKP_ROR32( SKP_int32 a32, SKP_int rot )
     else
         return (SKP_int32) ((x << (32 - r)) | (x >> r));
 }
+#endif
 
 /* Allocate SKP_int16 alligned to 4-byte memory address */
-#ifdef EMBEDDED_ARM
+#if EMBEDDED_ARM
+#if defined(_WIN32) && defined(_M_ARM)
+#define SKP_DWORD_ALIGN __declspec(align(4))
+#else
 #define SKP_DWORD_ALIGN __attribute__((aligned(4)))
+#endif
 #else
 #define SKP_DWORD_ALIGN
 #endif
@@ -502,7 +517,10 @@ SKP_INLINE SKP_int32 SKP_ROR32( SKP_int32 a32, SKP_int rot )
 // a32 + (b32 * c32) output have to be 32bit int
 #define SKP_MLA(a32, b32, c32)             SKP_ADD32((a32),((b32) * (c32)))
 
-// a32 + ((a32 >> 16)  * (b32 >> 16)) output have to be 32bit int
+/* ((a32 >> 16)  * (b32 >> 16)) output have to be 32bit int */
+#define SKP_SMULTT(a32, b32)			(((a32) >> 16) * ((b32) >> 16))
+
+/* a32 + ((a32 >> 16)  * (b32 >> 16)) output have to be 32bit int */
 #define SKP_SMLATT(a32, b32, c32)          SKP_ADD32((a32),((b32) >> 16) * ((c32) >> 16))
 
 #define SKP_SMLALBB(a64, b16, c16)         SKP_ADD64((a64),(SKP_int64)((SKP_int32)(b16) * (SKP_int32)(c16)))
@@ -510,15 +528,21 @@ SKP_INLINE SKP_int32 SKP_ROR32( SKP_int32 a32, SKP_int rot )
 // (a32 * b32)
 #define SKP_SMULL(a32, b32)                ((SKP_int64)(a32) * /*(SKP_int64)*/(b32))
 
-// multiply-accumulate macros that allow overflow in the addition (ie, no asserts in debug mode)
-#define SKP_MLA_ovflw(a32, b32, c32)       SKP_MLA(a32, b32, c32)
-#ifndef SKP_SMLABB_ovflw
-#    define SKP_SMLABB_ovflw(a32, b32, c32)    SKP_SMLABB(a32, b32, c32)
-#endif
-#define SKP_SMLATT_ovflw(a32, b32, c32)    SKP_SMLATT(a32, b32, c32)
-#define SKP_SMLAWB_ovflw(a32, b32, c32)    SKP_SMLAWB(a32, b32, c32)
-#define SKP_SMLAWT_ovflw(a32, b32, c32)    SKP_SMLAWT(a32, b32, c32)
+/* Adds two signed 32-bit values in a way that can overflow, while not relying on undefined behaviour
+   (just standard two's complement implementation-specific behaviour) */
+#define SKP_ADD32_ovflw(a, b)               ((SKP_int32)((SKP_uint32)(a) + (SKP_uint32)(b)))
+/* Subtractss two signed 32-bit values in a way that can overflow, while not relying on undefined behaviour
+   (just standard two's complement implementation-specific behaviour) */
+#define SKP_SUB32_ovflw(a, b)               ((SKP_int32)((SKP_uint32)(a) - (SKP_uint32)(b)))
 
+/* Multiply-accumulate macros that allow overflow in the addition (ie, no asserts in debug mode) */
+#define SKP_MLA_ovflw(a32, b32, c32)        SKP_ADD32_ovflw((a32), (SKP_uint32)(b32) * (SKP_uint32)(c32))
+#ifndef SKP_SMLABB_ovflw
+ #define SKP_SMLABB_ovflw(a32, b32, c32)    SKP_ADD32_ovflw((a32), SKP_SMULBB((b32),(c32)))
+#endif
+#define SKP_SMLATT_ovflw(a32, b32, c32) 	SKP_ADD32_ovflw((a32), SKP_SMULTT((b32),(c32)))
+#define SKP_SMLAWB_ovflw(a32, b32, c32)	    SKP_ADD32_ovflw((a32), SKP_SMULWB((b32),(c32)))
+#define SKP_SMLAWT_ovflw(a32, b32, c32)	    SKP_ADD32_ovflw((a32), SKP_SMULWT((b32),(c32)))
 #define SKP_DIV32_16(a32, b16)             ((SKP_int32)((a32) / (b16)))
 #define SKP_DIV32(a32, b32)                ((SKP_int32)((a32) / (b32)))
 
@@ -549,7 +573,7 @@ SKP_INLINE SKP_int32 SKP_ROR32( SKP_int32 a32, SKP_int rot )
 #define SKP_RSHIFT(a, shift)               SKP_RSHIFT32(a, shift)        // shift >= 0, shift < 32
 
 /* saturates before shifting */
-#define SKP_LSHIFT_SAT32(a, shift)         (SKP_LSHIFT32( SKP_LIMIT( (a), SKP_RSHIFT32( SKP_int32_MIN, (shift) ),    \
+#define SKP_LSHIFT_SAT32(a, shift)         (SKP_LSHIFT32( SKP_LIMIT_32( (a), SKP_RSHIFT32( SKP_int32_MIN, (shift) ),    \
                                                                           SKP_RSHIFT32( SKP_int32_MAX, (shift) ) ), (shift) ))
 
 #define SKP_LSHIFT_ovflw(a, shift)        ((a)<<(shift))        // shift >= 0, allowed to overflow
@@ -627,7 +651,7 @@ SKP_INLINE SKP_int32 SKP_max_32(SKP_int32 a, SKP_int32 b)
 //        ARMv3M+        3 instruction cycles. use SMULL and ignore LSB registers.(except xM) 
 //#define SKP_SMMUL(a32, b32)            (SKP_int32)SKP_RSHIFT(SKP_SMLAL(SKP_SMULWB((a32), (b32)), (a32), SKP_RSHIFT_ROUND((b32), 16)), 16)
 // the following seems faster on x86
-#define SKP_SMMUL(a32, b32)              (SKP_int32)SKP_RSHIFT64(SKP_SMULL((a32), (b32)), 32)
+//#define SKP_SMMUL(a32, b32)              (SKP_int32)SKP_RSHIFT64(SKP_SMULL((a32), (b32)), 32)
 
 #include "SKP_Silk_Inlines.h"
 

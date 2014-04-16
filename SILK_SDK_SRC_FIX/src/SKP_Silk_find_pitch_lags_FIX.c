@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -66,7 +66,7 @@ void SKP_Silk_find_pitch_lags_FIX(
     /* First LA_LTP samples */
     x_buf_ptr = x_buf + buf_len - psPredSt->pitch_LPC_win_length;
     Wsig_ptr  = Wsig;
-    SKP_Silk_apply_sine_window_new( Wsig_ptr, x_buf_ptr, 1, psEnc->sCmn.la_pitch );
+    SKP_Silk_apply_sine_window( Wsig_ptr, x_buf_ptr, 1, psEnc->sCmn.la_pitch );
 
     /* Middle un - windowed samples */
     Wsig_ptr  += psEnc->sCmn.la_pitch;
@@ -76,7 +76,7 @@ void SKP_Silk_find_pitch_lags_FIX(
     /* Last LA_LTP samples */
     Wsig_ptr  += psPredSt->pitch_LPC_win_length - SKP_LSHIFT( psEnc->sCmn.la_pitch, 1 );
     x_buf_ptr += psPredSt->pitch_LPC_win_length - SKP_LSHIFT( psEnc->sCmn.la_pitch, 1 );
-    SKP_Silk_apply_sine_window_new( Wsig_ptr, x_buf_ptr, 2, psEnc->sCmn.la_pitch );
+    SKP_Silk_apply_sine_window( Wsig_ptr, x_buf_ptr, 2, psEnc->sCmn.la_pitch );
 
     /* Calculate autocorrelation sequence */
     SKP_Silk_autocorr( auto_corr, &scale, Wsig, psPredSt->pitch_LPC_win_length, psEnc->sCmn.pitchEstimationLPCOrder + 1 ); 

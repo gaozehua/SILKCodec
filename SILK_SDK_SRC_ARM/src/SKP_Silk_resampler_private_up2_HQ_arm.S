@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -31,35 +31,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if EMBEDDED_ARM>=5
 
-S_ptr				.req	r0
-xy0				.req	r4
-xy1				.req	r5
-up2_coefs			.req	r6
+	VARDEF S_ptr, r0
+	VARDEF xy0, r4
+	VARDEF xy1, r5
+	VARDEF up2_coefs, r6
 #ifdef IPHONE
-S_0				.req	r8
-S_1				.req	_r7
-S_2				.req	r8
-S_3				.req	_r7
-S_4				.req	r8
-S_5				.req	_r7
+	VARDEF S_0, r8
+	VARDEF S_1, _r7
+	VARDEF S_2, r8
+	VARDEF S_3, _r7
+	VARDEF S_4, r8
+	VARDEF S_5, _r7
 #else
-S_0				.req	_r7
-S_1				.req	r8
-S_2				.req	_r7
-S_3				.req	r8
-S_4				.req	_r7
-S_5				.req	r8
+	VARDEF S_0, _r7
+	VARDEF S_1, r8
+	VARDEF S_2, _r7
+	VARDEF S_3, r8
+	VARDEF S_4, _r7
+	VARDEF S_5, r8
 #endif
-in				.req	sb
-out1				.req	sl
-out2				.req	ip
-out				.req	lr
+	VARDEF in, sb
+	VARDEF out1, sl
+	VARDEF out2, ip
+	VARDEF out, lr
 
 .globl	SYM(SKP_Silk_resampler_private_up2_HQ)
 SYM(SKP_Silk_resampler_private_up2_HQ):
 	stmdb	sp!,  {r4-r10, fp, ip, lr}
 	add		fp, sp, #36
-0:
+L(0)
 	ldrsh	in, [r2], #2
 	ldmia	S_ptr, {S_0, S_1}
 	ldr	up2_coefs, SYM(resampler_up2_hq_0)
@@ -132,21 +132,21 @@ SYM(SKP_Silk_resampler_private_up2_HQ):
 	subs	r3, r3, #1
 	str	S_4, [S_ptr], #-16	// &S[0]
 	strh	out, [r1], #2
-	bgt	0b
+	bgt	LR(0, b)
 		
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
 
-SYM(resampler_up2_hq_0):
-.long	0x83BF10B8
+L(SYM(resampler_up2_hq_0))
+	DCD	0x83BF10B8
 
-SYM(resampler_up2_hq_1):
-.long 	0xD2FF3FA7
+L(SYM(resampler_up2_hq_1))
+	DCD 	0xD2FF3FA7
 
-SYM(resampler_up2_hq_notch_1):
-.long	0xF1EC1EB8
+L(SYM(resampler_up2_hq_notch_1))
+	DCD	0xF1EC1EB8
 
-SYM(resampler_up2_hq_notch_2):
-.long	0x6F5C3333
-
+L(SYM(resampler_up2_hq_notch_2))
+	DCD	0x6F5C3333
+	END
 #endif
 #endif

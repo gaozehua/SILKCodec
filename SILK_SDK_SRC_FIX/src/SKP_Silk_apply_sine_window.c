@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -43,8 +43,8 @@ static SKP_int16 freq_table_Q16[ 27 ] = {
     2313,    2214,    2123,    2038,    1961,    1889,    1822,    1760,    1702,
 };
 
-//#if EMBEDDED_ARM<6
-void SKP_Silk_apply_sine_window_new(
+
+void SKP_Silk_apply_sine_window(
     SKP_int16                        px_win[],            /* O    Pointer to windowed signal                  */
     const SKP_int16                  px[],                /* I    Pointer to input signal                     */
     const SKP_int                    win_type,            /* I    Selects a window type                       */
@@ -53,9 +53,6 @@ void SKP_Silk_apply_sine_window_new(
 {
     SKP_int   k, f_Q16, c_Q16;
     SKP_int32 S0_Q16, S1_Q16;
-#if !defined(_SYSTEM_IS_BIG_ENDIAN)
-    SKP_int32 px32;
-#endif
     SKP_assert( win_type == 1 || win_type == 2 );
 
     /* Length must be in a range from 16 to 120 and a multiple of 4 */
@@ -89,21 +86,6 @@ void SKP_Silk_apply_sine_window_new(
 
     /* Uses the recursive equation:   sin(n*f) = 2 * cos(f) * sin((n-1)*f) - sin((n-2)*f)    */
     /* 4 samples at a time */
-#if !defined(_SYSTEM_IS_BIG_ENDIAN)
-    for( k = 0; k < length; k += 4 ) {
-        px32 = *( (SKP_int32 *)&px[ k ] );                        /* load two values at once */
-        px_win[ k ]     = (SKP_int16)SKP_SMULWB( SKP_RSHIFT( S0_Q16 + S1_Q16, 1 ), px32 );
-        px_win[ k + 1 ] = (SKP_int16)SKP_SMULWT( S1_Q16, px32 );
-        S0_Q16 = SKP_SMULWB( S1_Q16, c_Q16 ) + SKP_LSHIFT( S1_Q16, 1 ) - S0_Q16 + 1;
-        S0_Q16 = SKP_min( S0_Q16, ( 1 << 16 ) );
-
-        px32 = *( (SKP_int32 *)&px[k + 2] );                      /* load two values at once */
-        px_win[ k + 2 ] = (SKP_int16)SKP_SMULWB( SKP_RSHIFT( S0_Q16 + S1_Q16, 1 ), px32 );
-        px_win[ k + 3 ] = (SKP_int16)SKP_SMULWT( S0_Q16, px32 );
-        S1_Q16 = SKP_SMULWB( S0_Q16, c_Q16 ) + SKP_LSHIFT( S0_Q16, 1 ) - S1_Q16;
-        S1_Q16 = SKP_min( S1_Q16, ( 1 << 16 ) );
-    }
-#else
     for( k = 0; k < length; k += 4 ) {
         px_win[ k ]     = (SKP_int16)SKP_SMULWB( SKP_RSHIFT( S0_Q16 + S1_Q16, 1 ), px[ k ] );
         px_win[ k + 1 ] = (SKP_int16)SKP_SMULWB( S1_Q16, px[ k + 1] );
@@ -115,6 +97,5 @@ void SKP_Silk_apply_sine_window_new(
         S1_Q16 = SKP_SMULWB( S0_Q16, c_Q16 ) + SKP_LSHIFT( S0_Q16, 1 ) - S1_Q16;
         S1_Q16 = SKP_min( S1_Q16, ( 1 << 16 ) );
     }
-#endif
 }
-//#endif
+

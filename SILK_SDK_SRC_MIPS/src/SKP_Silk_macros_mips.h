@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -148,6 +148,8 @@ SKP_INLINE SKP_int32 SKP_Silk_CLZ64(SKP_int64 in)
 	low = SKP_Silk_CLZ32(low) + 32;
 	return high ? rc : low;
 }
+
+#define SKP_SMMUL(a32, b32)				(SKP_int32)SKP_RSHIFT64(SKP_SMULL((a32), (b32)), 32)
 
 #endif //_SKP_SILK_API_GNUC_MIPS_H_
 

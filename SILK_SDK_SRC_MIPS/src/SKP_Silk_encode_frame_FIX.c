@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -119,13 +119,13 @@ SKP_int SKP_Silk_encode_frame_FIX(
     /* Noise shaping quantization            */
     /*****************************************/
     if( psEnc->sCmn.nStatesDelayedDecision > 1 || psEnc->sCmn.warping_Q16 > 0 ) {
-        SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &sEncCtrl.sCmn, &psEnc->sNSQ, xfw,
+        SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &sEncCtrl.sCmn, &psEnc->sCmn.sNSQ, xfw,
             psEnc->sCmn.q, sEncCtrl.sCmn.NLSFInterpCoef_Q2, 
             sEncCtrl.PredCoef_Q12[ 0 ], sEncCtrl.LTPCoef_Q14, sEncCtrl.AR2_Q13, sEncCtrl.HarmShapeGain_Q14, 
             sEncCtrl.Tilt_Q14, sEncCtrl.LF_shp_Q14, sEncCtrl.Gains_Q16, sEncCtrl.Lambda_Q10, 
             sEncCtrl.LTP_scale_Q14 );
     } else {
-        SKP_Silk_NSQ( &psEnc->sCmn, &sEncCtrl.sCmn, &psEnc->sNSQ, xfw, 
+        SKP_Silk_NSQ( &psEnc->sCmn, &sEncCtrl.sCmn, &psEnc->sCmn.sNSQ, xfw, 
             psEnc->sCmn.q, sEncCtrl.sCmn.NLSFInterpCoef_Q2, 
             sEncCtrl.PredCoef_Q12[ 0 ], sEncCtrl.LTPCoef_Q14, sEncCtrl.AR2_Q13, sEncCtrl.HarmShapeGain_Q14, 
             sEncCtrl.Tilt_Q14, sEncCtrl.LF_shp_Q14, sEncCtrl.Gains_Q16, sEncCtrl.Lambda_Q10, 
@@ -141,8 +141,8 @@ SKP_int SKP_Silk_encode_frame_FIX(
         if( psEnc->sCmn.noSpeechCounter > NO_SPEECH_FRAMES_BEFORE_DTX ) {
             psEnc->sCmn.inDTX = 1;
         }
-        if( psEnc->sCmn.noSpeechCounter > MAX_CONSECUTIVE_DTX ) {
-            psEnc->sCmn.noSpeechCounter = 0;
+        if( psEnc->sCmn.noSpeechCounter > MAX_CONSECUTIVE_DTX + NO_SPEECH_FRAMES_BEFORE_DTX ) {
+            psEnc->sCmn.noSpeechCounter = NO_SPEECH_FRAMES_BEFORE_DTX;
             psEnc->sCmn.inDTX           = 0;
         }
     } else {
@@ -317,7 +317,7 @@ void SKP_Silk_LBRR_encode_FIX(
         if( psEnc->sCmn.Complexity > 0 && psEnc->sCmn.TargetRate_bps > Rate_only_parameters ) {
             if( psEnc->sCmn.nFramesInPayloadBuf == 0 ) {
                 /* First frame in packet; copy everything */
-                SKP_memcpy( &psEnc->sNSQ_LBRR, &psEnc->sNSQ, sizeof( SKP_Silk_nsq_state ) );
+                SKP_memcpy( &psEnc->sCmn.sNSQ_LBRR, &psEnc->sCmn.sNSQ, sizeof( SKP_Silk_nsq_state ) );
 
                 psEnc->sCmn.LBRRprevLastGainIndex = psEnc->sShape.LastGainIndex;
                 /* Increase Gains to get target LBRR rate */
@@ -333,12 +333,12 @@ void SKP_Silk_LBRR_encode_FIX(
             /* Noise shaping quantization            */
             /*****************************************/
             if( psEnc->sCmn.nStatesDelayedDecision > 1 || psEnc->sCmn.warping_Q16 > 0 ) {
-                SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sNSQ_LBRR, xfw, psEnc->sCmn.q_LBRR, 
+                SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sCmn.sNSQ_LBRR, xfw, psEnc->sCmn.q_LBRR, 
                     psEncCtrl->sCmn.NLSFInterpCoef_Q2, psEncCtrl->PredCoef_Q12[ 0 ], psEncCtrl->LTPCoef_Q14, 
                     psEncCtrl->AR2_Q13, psEncCtrl->HarmShapeGain_Q14, psEncCtrl->Tilt_Q14, psEncCtrl->LF_shp_Q14, 
                     psEncCtrl->Gains_Q16, psEncCtrl->Lambda_Q10, psEncCtrl->LTP_scale_Q14 );
             } else {
-                SKP_Silk_NSQ( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sNSQ_LBRR, xfw, psEnc->sCmn.q_LBRR, 
+                SKP_Silk_NSQ( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sCmn.sNSQ_LBRR, xfw, psEnc->sCmn.q_LBRR, 
                     psEncCtrl->sCmn.NLSFInterpCoef_Q2, psEncCtrl->PredCoef_Q12[ 0 ], psEncCtrl->LTPCoef_Q14, 
                     psEncCtrl->AR2_Q13, psEncCtrl->HarmShapeGain_Q14, psEncCtrl->Tilt_Q14, psEncCtrl->LF_shp_Q14, 
                     psEncCtrl->Gains_Q16, psEncCtrl->Lambda_Q10, psEncCtrl->LTP_scale_Q14 );

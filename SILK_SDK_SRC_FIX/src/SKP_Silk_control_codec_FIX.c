@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -45,7 +45,7 @@ SKP_INLINE SKP_int SKP_Silk_setup_fs_FIX(
 
 SKP_INLINE SKP_int SKP_Silk_setup_rate_FIX(
     SKP_Silk_encoder_state_FIX      *psEnc,             /* I/O  Pointer to Silk encoder state FIX       */
-    SKP_int                         TargetRate_bps      /* I    Target max bitrate (if SNR_dB == 0)     */
+    SKP_int32                       TargetRate_bps      /* I    Target max bitrate (if SNR_dB == 0)     */
 );
 
 SKP_INLINE SKP_int SKP_Silk_setup_LBRR_FIX(
@@ -239,13 +239,12 @@ SKP_INLINE SKP_int SKP_Silk_setup_fs_FIX(
     /* Set internal sampling frequency */
     if( psEnc->sCmn.fs_kHz != fs_kHz ) {
         /* reset part of the state */
-        SKP_memset( &psEnc->sShape,          0,                            sizeof( SKP_Silk_shape_state_FIX ) );
-        SKP_memset( &psEnc->sPrefilt,        0,                            sizeof( SKP_Silk_prefilter_state_FIX ) );
-        SKP_memset( &psEnc->sNSQ,            0,                            sizeof( SKP_Silk_nsq_state ) );
-        SKP_memset( &psEnc->sPred,           0,                            sizeof( SKP_Silk_predict_state_FIX ) );
-        SKP_memset( psEnc->sNSQ.xq,          0, ( 2 * MAX_FRAME_LENGTH ) * sizeof( SKP_int16 ) );
-        SKP_memset( psEnc->sNSQ_LBRR.xq,     0, ( 2 * MAX_FRAME_LENGTH ) * sizeof( SKP_int16 ) );
-        SKP_memset( psEnc->sCmn.LBRR_buffer, 0,           MAX_LBRR_DELAY * sizeof( SKP_SILK_LBRR_struct ) );
+        SKP_memset( &psEnc->sShape,           0,                            sizeof( SKP_Silk_shape_state_FIX ) );
+        SKP_memset( &psEnc->sPrefilt,         0,                            sizeof( SKP_Silk_prefilter_state_FIX ) );
+        SKP_memset( &psEnc->sPred,            0,                            sizeof( SKP_Silk_predict_state_FIX ) );
+        SKP_memset( &psEnc->sCmn.sNSQ,        0,                            sizeof( SKP_Silk_nsq_state ) );
+        SKP_memset( psEnc->sCmn.sNSQ_LBRR.xq, 0, ( 2 * MAX_FRAME_LENGTH ) * sizeof( SKP_int16 ) );
+        SKP_memset( psEnc->sCmn.LBRR_buffer,  0,           MAX_LBRR_DELAY * sizeof( SKP_SILK_LBRR_struct ) );
 #if SWITCH_TRANSITION_FILTERING
         SKP_memset( psEnc->sCmn.sLP.In_LP_State, 0, 2 * sizeof( SKP_int32 ) );
         if( psEnc->sCmn.sLP.mode == 1 ) {
@@ -265,14 +264,14 @@ SKP_INLINE SKP_int SKP_Silk_setup_fs_FIX(
         SKP_memset( psEnc->sPred.prev_NLSFq_Q15, 0, MAX_LPC_ORDER * sizeof( SKP_int ) );
 
         /* Initialize non-zero parameters */
-        psEnc->sCmn.prevLag                 = 100;
-        psEnc->sCmn.prev_sigtype            = SIG_TYPE_UNVOICED;
-        psEnc->sCmn.first_frame_after_reset = 1;
-        psEnc->sPrefilt.lagPrev             = 100;
-        psEnc->sShape.LastGainIndex         = 1;
-        psEnc->sNSQ.lagPrev                 = 100;
-        psEnc->sNSQ.prev_inv_gain_Q16       = 65536;
-        psEnc->sNSQ_LBRR.prev_inv_gain_Q16  = 65536;
+        psEnc->sCmn.prevLag                     = 100;
+        psEnc->sCmn.prev_sigtype                = SIG_TYPE_UNVOICED;
+        psEnc->sCmn.first_frame_after_reset     = 1;
+        psEnc->sPrefilt.lagPrev                 = 100;
+        psEnc->sShape.LastGainIndex             = 1;
+        psEnc->sCmn.sNSQ.lagPrev                = 100;
+        psEnc->sCmn.sNSQ.prev_inv_gain_Q16      = 65536;
+        psEnc->sCmn.sNSQ_LBRR.prev_inv_gain_Q16 = 65536;
 
         psEnc->sCmn.fs_kHz = fs_kHz;
         if( psEnc->sCmn.fs_kHz == 8 ) {
@@ -317,7 +316,7 @@ SKP_INLINE SKP_int SKP_Silk_setup_fs_FIX(
 
 SKP_INLINE SKP_int SKP_Silk_setup_rate_FIX(
     SKP_Silk_encoder_state_FIX      *psEnc,             /* I/O  Pointer to Silk encoder state FIX       */
-    SKP_int                         TargetRate_bps      /* I    Target max bitrate (if SNR_dB == 0)     */
+    SKP_int32                       TargetRate_bps      /* I    Target max bitrate (if SNR_dB == 0)     */
 )
 {
     SKP_int k, ret = SKP_SILK_NO_ERROR;
@@ -340,7 +339,7 @@ SKP_INLINE SKP_int SKP_Silk_setup_rate_FIX(
         }
         for( k = 1; k < TARGET_RATE_TAB_SZ; k++ ) {
             /* Find bitrate interval in table and interpolate */
-            if( TargetRate_bps < rateTable[ k ] ) {
+            if( TargetRate_bps <= rateTable[ k ] ) {
                 frac_Q6 = SKP_DIV32( SKP_LSHIFT( TargetRate_bps - rateTable[ k - 1 ], 6 ), 
                                                  rateTable[ k ] - rateTable[ k - 1 ] );
                 psEnc->SNR_dB_Q7 = SKP_LSHIFT( SNR_table_Q1[ k - 1 ], 6 ) + SKP_MUL( frac_Q6, SNR_table_Q1[ k ] - SNR_table_Q1[ k - 1 ] );

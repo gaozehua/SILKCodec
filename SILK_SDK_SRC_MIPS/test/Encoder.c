@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -37,14 +37,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "SKP_Silk_SDK_API.h"
 
 /* Define codec specific settings */
 #define MAX_BYTES_PER_FRAME     250 // Equals peak bitrate of 100 kbps 
 #define MAX_INPUT_FRAMES        5
-#define MAX_LBRR_DELAY          2
-#define MAX_FRAME_LENGTH        480
 #define FRAME_LENGTH_MS         20
 #define MAX_API_FS_KHZ          48
 
@@ -68,10 +65,38 @@ void swap_endian(
 }
 #endif
 
+#if (defined(_WIN32) || defined(_WINCE)) 
+#include <windows.h>	/* timer */
+#else    // Linux or Mac
+#include <sys/time.h>
+#endif
+
+#ifdef _WIN32
+
+unsigned long GetHighResolutionTime() /* O: time in usec*/
+{
+    /* Returns a time counter in microsec	*/
+    /* the resolution is platform dependent */
+    /* but is typically 1.62 us resolution  */
+    LARGE_INTEGER lpPerformanceCount;
+    LARGE_INTEGER lpFrequency;
+    QueryPerformanceCounter(&lpPerformanceCount);
+    QueryPerformanceFrequency(&lpFrequency);
+    return (unsigned long)((1000000*(lpPerformanceCount.QuadPart)) / lpFrequency.QuadPart);
+}
+#else    // Linux or Mac
+unsigned long GetHighResolutionTime() /* O: time in usec*/
+{
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    return((tv.tv_sec*1000000)+(tv.tv_usec));
+}
+#endif // _WIN32
+
 static void print_usage( char* argv[] ) {
     printf( "\nusage: %s in.pcm out.bit [settings]\n", argv[ 0 ] );
     printf( "\nin.pcm               : Speech input to encoder" );
-    printf( "\nstream.bit           : Bitstream output from encoder" );
+    printf( "\nout.bit              : Bitstream output from encoder" );
     printf( "\n   settings:" );
     printf( "\n-Fs_API <Hz>         : API sampling rate in Hz, default: 24000" );
     printf( "\n-Fs_maxInternal <Hz> : Maximum internal sampling rate in Hz, default: 24000" ); 
@@ -87,6 +112,8 @@ static void print_usage( char* argv[] ) {
 
 int main( int argc, char* argv[] )
 {
+    unsigned long tottime, starttime;
+    double    filetime;
     size_t    counter;
     SKP_int32 k, args, totPackets, totActPackets, ret;
     SKP_int16 nBytes;
@@ -105,12 +132,18 @@ int main( int argc, char* argv[] )
     SKP_int32 API_fs_Hz = 24000;
     SKP_int32 max_internal_fs_Hz = 0;
     SKP_int32 targetRate_bps = 25000;
-    SKP_int32 packetSize_ms = 20;
+    SKP_int32 smplsSinceLastPacket, packetSize_ms = 20;
     SKP_int32 frameSizeReadFromFile_ms = 20;
-    SKP_int32 packetLoss_perc = 0, complexity_mode = 2, smplsSinceLastPacket;
-    SKP_int32 INBandFEC_enabled = 0, DTX_enabled = 0, quiet = 0;
+    SKP_int32 packetLoss_perc = 0;
+#if LOW_COMPLEXITY_ONLY
+    SKP_int32 complexity_mode = 0;
+#else
+    SKP_int32 complexity_mode = 2;
+#endif
+    SKP_int32 DTX_enabled = 0, INBandFEC_enabled = 0, quiet = 0;
     SKP_SILK_SDK_EncControlStruct encControl; // Struct for input to encoder
-        
+    SKP_SILK_SDK_EncControlStruct encStatus;  // Struct for status of encoder
+
     if( argc < 3 ) {
         print_usage( argv );
         exit( 0 );
@@ -167,8 +200,8 @@ int main( int argc, char* argv[] )
 
     /* Print options */
     if( !quiet ) {
-        printf("******************* Silk Encoder v %s ****************\n", SKP_Silk_SDK_get_version());
-        printf("******************* Compiled for %d bit cpu ********* \n", (int)sizeof(void*) * 8 );
+        printf("********** Silk Encoder (Fixed Point) v %s ********************\n", SKP_Silk_SDK_get_version());
+        printf("********** Compiled for %d bit cpu ******************************* \n", (int)sizeof(void*) * 8 );
         printf( "Input:                          %s\n",     speechInFileName );
         printf( "Output:                         %s\n",     bitOutFileName );
         printf( "API sampling rate:              %d Hz\n",  API_fs_Hz );
@@ -201,17 +234,19 @@ int main( int argc, char* argv[] )
     /* Create Encoder */
     ret = SKP_Silk_SDK_Get_Encoder_Size( &encSizeBytes );
     if( ret ) {
-        printf( "\nSKP_Silk_create_encoder returned %d", ret );
+        printf( "\nError: SKP_Silk_create_encoder returned %d\n", ret );
+        exit( 0 );
     }
 
     psEnc = malloc( encSizeBytes );
 
     /* Reset Encoder */
-    ret = SKP_Silk_SDK_InitEncoder( psEnc, &encControl );
+    ret = SKP_Silk_SDK_InitEncoder( psEnc, &encStatus );
     if( ret ) {
-        printf( "\nSKP_Silk_reset_encoder returned %d", ret );
+        printf( "\nError: SKP_Silk_reset_encoder returned %d\n", ret );
+        exit( 0 );
     }
-    
+
     /* Set Encoder parameters */
     encControl.API_sampleRate        = API_fs_Hz;
     encControl.maxInternalSampleRate = max_internal_fs_Hz;
@@ -227,11 +262,13 @@ int main( int argc, char* argv[] )
         exit( 0 );
     }
 
+    tottime              = 0;
     totPackets           = 0;
     totActPackets        = 0;
     smplsSinceLastPacket = 0;
     sumBytes             = 0.0;
     sumActBytes          = 0.0;
+    smplsSinceLastPacket = 0;
     
     while( 1 ) {
         /* Read input from file */
@@ -239,19 +276,22 @@ int main( int argc, char* argv[] )
 #ifdef _SYSTEM_IS_BIG_ENDIAN
         swap_endian( in, counter );
 #endif
-        if( (SKP_int)counter < ( ( frameSizeReadFromFile_ms * API_fs_Hz ) / 1000 ) ) {
+        if( ( SKP_int )counter < ( ( frameSizeReadFromFile_ms * API_fs_Hz ) / 1000 ) ) {
             break;
         }
 
         /* max payload size */
         nBytes = MAX_BYTES_PER_FRAME * MAX_INPUT_FRAMES;
 
+        starttime = GetHighResolutionTime();
+
         /* Silk Encoder */
         ret = SKP_Silk_SDK_Encode( psEnc, &encControl, in, (SKP_int16)counter, payload, &nBytes );
         if( ret ) {
             printf( "\nSKP_Silk_Encode returned %d", ret );
-            break;
         }
+
+        tottime += GetHighResolutionTime() - starttime;
 
         /* Get packet size */
         packetSize_ms = ( SKP_int )( ( 1000 * ( SKP_int32 )encControl.packetSize ) / encControl.API_sampleRate );
@@ -284,11 +324,12 @@ int main( int argc, char* argv[] )
 
             /* Write payload */
             fwrite( payload, sizeof( SKP_uint8 ), nBytes, bitOutFile );
+
+            smplsSinceLastPacket = 0;
         
             if( !quiet ) {
-                fprintf( stderr, "\rPackets encoded:              %d", totPackets );
+                fprintf( stderr, "\rPackets encoded:                %d", totPackets );
             }
-            smplsSinceLastPacket = 0;
         }
     }
 
@@ -304,15 +345,21 @@ int main( int argc, char* argv[] )
     fclose( speechInFile );
     fclose( bitOutFile   );
 
+    filetime  = totPackets * 1e-3 * packetSize_ms;
     avg_rate  = 8.0 / packetSize_ms * sumBytes       / totPackets;
     act_rate  = 8.0 / packetSize_ms * sumActBytes    / totActPackets;
     if( !quiet ) {
-        printf( "\nAverage bitrate:             %.3f kbps", avg_rate  );
-        printf( "\nActive bitrate:              %.3f kbps", act_rate  );
+        printf( "\nFile length:                    %.3f s", filetime );
+        printf( "\nTime for encoding:              %.3f s (%.3f%% of realtime)", 1e-6 * tottime, 1e-4 * tottime / filetime );
+        printf( "\nAverage bitrate:                %.3f kbps", avg_rate  );
+        printf( "\nActive bitrate:                 %.3f kbps", act_rate  );
         printf( "\n\n" );
     } else {
+        /* print time and % of realtime */
+        printf("%.3f %.3f %d ", 1e-6 * tottime, 1e-4 * tottime / filetime, totPackets );
         /* print average and active bitrates */
         printf( "%.3f %.3f \n", avg_rate, act_rate );
     }
+
     return 0;
 }

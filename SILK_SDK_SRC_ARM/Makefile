@@ -1,7 +1,7 @@
 #					
 # Makefile for Silk SDK			
 #
-# Copyright (c) 2009, Skype Limited
+# Copyright (c) 2012, Skype Limited
 # All rights reserved.
 #
 
@@ -25,7 +25,7 @@ CP     = $(TOOLCHAIN_PREFIX)cp
 cppflags-from-defines 	= $(addprefix -D,$(1))
 cppflags-from-includes 	= $(addprefix -I,$(1))
 ldflags-from-ldlibdirs 	= $(addprefix -L,$(1))
-ldlibs-from-libs 		= $(addprefix -l,$(1))
+ldlibs-from-libs        = $(addprefix -l,$(1))
 
 ifneq (,$(TARGET_CPU))
 	CFLAGS	+= -mcpu=$(TARGET_CPU)

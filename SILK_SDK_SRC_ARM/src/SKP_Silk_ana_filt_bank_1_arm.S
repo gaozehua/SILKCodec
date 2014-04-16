@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -40,38 +40,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *		const SKP_int32		N            I:   Number of input samples 
  *  )
  */
-ptr_in_lo			.req	r0
-ptr_in_hi			.req	r3
-val_in_lo			.req	sb
-val_in_hi			.req	sl
-ptr_scratch			.req	r4
-ptr_scratch_N		.req	r1
-ptr_scratch_halfN	.req	r2
-idx_k				.req	ip
-val_N				.req	r8
-val_halfN			.req	r8
-val_scratch1		.req	r5
-val_scratch2		.req	r6
-ptr_out_lo			.req	r5
-ptr_out_hi			.req	r6
-ptr_s				.req	_r7
+	VARDEF ptr_in_lo, r0
+	VARDEF ptr_in_hi, r3
+	VARDEF val_in_lo, sb
+	VARDEF val_in_hi, sl
+	VARDEF ptr_scratch, r4
+	VARDEF ptr_scratch_N, r1
+	VARDEF ptr_scratch_halfN, r2
+	VARDEF idx_k, ip
+	VARDEF val_N, r8
+	VARDEF val_halfN, r8
+	VARDEF val_scratch1, r5
+	VARDEF val_scratch2, r6
+	VARDEF ptr_out_lo, r5
+	VARDEF ptr_out_hi, r6
+	VARDEF ptr_s, _r7
 
-val_const1			.req	r2
-val_const2			.req	ip			// 0x03FF F800
-val_const3			.req	sl			// 0x0000 7FFF
-val_const4			.req	lr			// 0xFFFF 8000
-idx_k2				.req	r8
-ptr_scratch_halfN_2	.req	r3
-val_scratch3		.req	r0
-val_scratch4		.req	r1
-out_tmpla			.req	sb
-out_tmplb			.req	r2
-out_tmpha			.req	r0
-out_tmphb			.req	_r7
+	VARDEF val_const1, r2
+	VARDEF val_const2, ip			// 0x03FF F800
+	VARDEF val_const3, sl			// 0x0000 7FFF
+	VARDEF val_const4, lr			// 0xFFFF 8000
+	VARDEF idx_k2, r8
+	VARDEF ptr_scratch_halfN_2, r3
+	VARDEF val_scratch3, r0
+	VARDEF val_scratch4, r1
+	VARDEF out_tmpla, sb
+	VARDEF out_tmplb, r2
+	VARDEF out_tmpha, r0
+	VARDEF out_tmphb, _r7
 
 .set	halfN, 0 
 .set	sp_ptr_out_lo, 4 
 .set	sp_ptr_out_hi, 8 
+
+	EXTERN SYM(SKP_Silk_allpass_int)
 
 .globl	SYM(SKP_Silk_ana_filt_bank_1)
 SYM(SKP_Silk_ana_filt_bank_1):
@@ -97,7 +99,7 @@ SYM(SKP_Silk_ana_filt_bank_1):
 	add		ptr_scratch_N, ptr_scratch, val_halfN, lsl #3
 	add		ptr_scratch_halfN, ptr_scratch, val_halfN, lsl #2
 	
-0:
+L(0)
 	mov		val_scratch1, val_in_lo, lsl #10
 	mov		val_scratch2, val_in_hi, lsl #10
 	ldrsh	val_in_lo, [ptr_in_lo], #4
@@ -105,7 +107,7 @@ SYM(SKP_Silk_ana_filt_bank_1):
 	subs	idx_k, idx_k, #1
 	str		val_scratch1, [ptr_scratch_N], #4
 	str		val_scratch2, [ptr_scratch_halfN], #4
-	bgt		0b
+	bgt		LR(0, b)
 	
 	mov		val_scratch1, val_in_lo, lsl #10
 	mov		val_scratch2, val_in_hi, lsl #10
@@ -135,7 +137,7 @@ SYM(SKP_Silk_ana_filt_bank_1):
 	ldr		ptr_out_lo, [sp, #sp_ptr_out_lo]
 	ldr		ptr_out_hi, [sp, #sp_ptr_out_hi]
 	
-1:
+L(1)
 	ldr		val_scratch3, [ptr_scratch], #4
 	ldr		val_scratch4, [ptr_scratch_halfN_2], #4
 	add		out_tmpla, val_scratch3, val_scratch4
@@ -146,6 +148,24 @@ SYM(SKP_Silk_ana_filt_bank_1):
 	mov		out_tmphb,  out_tmphb, asr #11
 	strh	out_tmplb,  [ptr_out_lo], #2
 	strh	out_tmphb,  [ptr_out_hi], #2
+#ifdef _WINRT
+	cmp		out_tmpla,  val_const2
+	ble		LR(2, f)
+	strh	val_const3, [ptr_out_lo, #-2]
+L(2)	
+	cmn		out_tmpla,  val_const2
+	bge		LR(2, f)
+	strh	val_const4, [ptr_out_lo, #-2]
+L(2)	
+	cmp		out_tmpha,  val_const2
+	ble		LR(2, f)
+	strh	val_const3, [ptr_out_hi, #-2]
+L(2)	
+	cmn		out_tmpha,  val_const2
+	bge		LR(2, f)
+	strh	val_const4, [ptr_out_hi, #-2]
+L(2)	
+#else	
 	cmp		out_tmpla,  val_const2
 	strgth	val_const3, [ptr_out_lo, #-2]
 	cmn		out_tmpla,  val_const2
@@ -154,12 +174,13 @@ SYM(SKP_Silk_ana_filt_bank_1):
 	strgth	val_const3, [ptr_out_hi, #-2]
 	cmn		out_tmpha,  val_const2
 	strlth	val_const4, [ptr_out_hi, #-2]
+#endif	
 	subs	idx_k2, idx_k2, #1
-	bgt		1b
+	bgt		LR(1, b)
 	
 	add		sp, sp, #12
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
-
+	END
 #endif
 
 #endif

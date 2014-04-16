@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -68,21 +68,52 @@ void swap_endian(
 }
 #endif
 
+#if (defined(_WIN32) || defined(_WINCE)) 
+#include <windows.h>	/* timer */
+#else    // Linux or Mac
+#include <sys/time.h>
+#endif
+
+#ifdef _WIN32
+
+unsigned long GetHighResolutionTime() /* O: time in usec*/
+{
+    /* Returns a time counter in microsec	*/
+    /* the resolution is platform dependent */
+    /* but is typically 1.62 us resolution  */
+    LARGE_INTEGER lpPerformanceCount;
+    LARGE_INTEGER lpFrequency;
+    QueryPerformanceCounter(&lpPerformanceCount);
+    QueryPerformanceFrequency(&lpFrequency);
+    return (unsigned long)((1000000*(lpPerformanceCount.QuadPart)) / lpFrequency.QuadPart);
+}
+#else    // Linux or Mac
+unsigned long GetHighResolutionTime() /* O: time in usec*/
+{
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    return((tv.tv_sec*1000000)+(tv.tv_usec));
+}
+#endif // _WIN32
+
 /* Seed for the random number generator, which is used for simulating packet loss */
 static SKP_int32 rand_seed = 1;
 
 static void print_usage(char* argv[]) {
     printf( "\nusage: %s in.bit out.pcm [settings]\n", argv[ 0 ] );
-    printf( "\nstream.bit   : Bitstream input to decoder" );
+    printf( "\nin.bit       : Bitstream input to decoder" );
     printf( "\nout.pcm      : Speech output from decoder" );
     printf( "\n   settings:" );
     printf( "\n-Fs_API <Hz> : Sampling rate of output signal in Hz; default: 24000" );
     printf( "\n-loss <perc> : Simulated packet loss percentage (0-100); default: 0" );
+    printf( "\n-quiet       : Print out just some basic values" );
     printf( "\n" );
 }
 
 int main( int argc, char* argv[] )
 {
+    unsigned long tottime, starttime;
+    double    filetime;
     size_t    counter;
     SKP_int32 args, totPackets, i, k;
     SKP_int16 ret, len, tot_len;
@@ -95,10 +126,10 @@ int main( int argc, char* argv[] )
     SKP_int16 out[ ( ( FRAME_LENGTH_MS * MAX_API_FS_KHZ ) << 1 ) * MAX_INPUT_FRAMES ], *outPtr;
     char      speechOutFileName[ 150 ], bitInFileName[ 150 ];
     FILE      *bitInFile, *speechOutFile;
-    SKP_int32 API_Fs_Hz = 0;
+    SKP_int32 packetSize_ms=0, API_Fs_Hz = 0;
     SKP_int32 decSizeBytes;
     void      *psDec;
-    float     loss_prob;
+    SKP_float loss_prob;
     SKP_int32 frames, lost, quiet;
     SKP_SILK_SDK_DecControlStruct DecControl;
 
@@ -135,8 +166,8 @@ int main( int argc, char* argv[] )
     }
 
     if( !quiet ) {
-        printf("******************* Silk Decoder v %s ****************\n", SKP_Silk_SDK_get_version());
-        printf("******************* Compiled for %d bit cpu ********* \n", (int)sizeof(void*) * 8 );
+        printf("********** Silk Decoder (Fixed Point) v %s ********************\n", SKP_Silk_SDK_get_version());
+        printf("********** Compiled for %d bit cpu *******************************\n", (int)sizeof(void*) * 8 );
         printf( "Input:                       %s\n", bitInFileName );
         printf( "Output:                      %s\n", speechOutFileName );
     }
@@ -152,7 +183,7 @@ int main( int argc, char* argv[] )
     {
         char header_buf[ 50 ];
         counter = fread( header_buf, sizeof( char ), strlen( "#!SILK_V3" ), bitInFile );
-        header_buf[ strlen( "#!SILK_V3" ) ] = ( char )0; /* Terminate with a null character */
+        header_buf[ strlen( "#!SILK_V3" ) ] = '\0'; /* Terminate with a null character */
         if( strcmp( header_buf, "#!SILK_V3" ) != 0 ) { 
             /* Non-equal strings */
             printf( "Error: Wrong Header %s\n", header_buf );
@@ -190,6 +221,7 @@ int main( int argc, char* argv[] )
     }
 
     totPackets = 0;
+    tottime    = 0;
     payloadEnd = payload;
 
     /* Simulate the jitter buffer holding MAX_FEC_DELAY packets */
@@ -207,6 +239,7 @@ int main( int argc, char* argv[] )
         }
         nBytesPerPacket[ i ] = nBytes;
         payloadEnd          += nBytes;
+        totPackets++;
     }
 
     while( 1 ) {
@@ -242,7 +275,9 @@ int main( int argc, char* argv[] )
             payloadPtr = payload;
             for( i = 0; i < MAX_LBRR_DELAY; i++ ) {
                 if( nBytesPerPacket[ i + 1 ] > 0 ) {
-                    SKP_Silk_SDK_search_for_LBRR( payloadPtr, nBytesPerPacket[ i + 1 ], i + 1, FECpayload, &nBytesFEC );
+                    starttime = GetHighResolutionTime();
+                    SKP_Silk_SDK_search_for_LBRR( payloadPtr, nBytesPerPacket[ i + 1 ], ( i + 1 ), FECpayload, &nBytesFEC );
+                    tottime += GetHighResolutionTime() - starttime;
                     if( nBytesFEC > 0 ) {
                         payloadToDec = FECpayload;
                         nBytes = nBytesFEC;
@@ -261,6 +296,7 @@ int main( int argc, char* argv[] )
         /* Silk decoder */
         outPtr = out;
         tot_len = 0;
+        starttime = GetHighResolutionTime();
 
         if( lost == 0 ) {
             /* No Loss: Decode all frames in the packet */
@@ -295,6 +331,9 @@ int main( int argc, char* argv[] )
                 tot_len += len;
             }
         }
+
+        packetSize_ms = tot_len / ( DecControl.API_sampleRate / 1000 );
+        tottime += GetHighResolutionTime() - starttime;
         totPackets++;
 
         /* Write output to file */
@@ -327,7 +366,9 @@ int main( int argc, char* argv[] )
             payloadPtr = payload;
             for( i = 0; i < MAX_LBRR_DELAY; i++ ) {
                 if( nBytesPerPacket[ i + 1 ] > 0 ) {
-                    SKP_Silk_SDK_search_for_LBRR( payloadPtr, nBytesPerPacket[ i + 1 ], i + 1, FECpayload, &nBytesFEC );
+                    starttime = GetHighResolutionTime();
+                    SKP_Silk_SDK_search_for_LBRR( payloadPtr, nBytesPerPacket[ i + 1 ], ( i + 1 ), FECpayload, &nBytesFEC );
+                    tottime += GetHighResolutionTime() - starttime;
                     if( nBytesFEC > 0 ) {
                         payloadToDec = FECpayload;
                         nBytes = nBytesFEC;
@@ -346,6 +387,7 @@ int main( int argc, char* argv[] )
         /* Silk decoder */
         outPtr  = out;
         tot_len = 0;
+        starttime = GetHighResolutionTime();
 
         if( lost == 0 ) {
             /* No loss: Decode all frames in the packet */
@@ -381,6 +423,9 @@ int main( int argc, char* argv[] )
                 tot_len += len;
             }
         }
+
+        packetSize_ms = tot_len / ( DecControl.API_sampleRate / 1000 );
+        tottime += GetHighResolutionTime() - starttime;
         totPackets++;
 
         /* Write output to file */
@@ -414,5 +459,14 @@ int main( int argc, char* argv[] )
     fclose( speechOutFile );
     fclose( bitInFile );
 
+    filetime = totPackets * 1e-3 * packetSize_ms;
+    if( !quiet ) {
+        printf("\nFile length:                 %.3f s", filetime);
+        printf("\nTime for decoding:           %.3f s (%.3f%% of realtime)", 1e-6 * tottime, 1e-4 * tottime / filetime);
+        printf("\n\n");
+    } else {
+        /* print time and % of realtime */
+        printf( "%.3f %.3f %d\n", 1e-6 * tottime, 1e-4 * tottime / filetime, totPackets );
+    }
     return 0;
 }

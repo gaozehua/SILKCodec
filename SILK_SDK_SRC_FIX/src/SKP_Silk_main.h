@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -28,12 +28,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SKP_SILK_MAIN_H
 #define SKP_SILK_MAIN_H
 
+#include "SKP_Silk_SigProc_FIX.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#include "SKP_Silk_SigProc_FIX.h"
 #include "SKP_Silk_define.h"
 #include "SKP_Silk_structs.h"
 #include "SKP_Silk_tables.h"

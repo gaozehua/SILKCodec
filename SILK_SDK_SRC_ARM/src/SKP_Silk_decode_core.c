@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -48,7 +48,7 @@ void SKP_Silk_decode_core(
     const SKP_int               q[ MAX_FRAME_LENGTH ]               /* I    Pulse signal                */
 )
 {
-    SKP_int   i, k, lag = 0, start_idx, sLTP_buf_idx, NLSF_interpolation_flag, sigtype, LTP_scale_Q14;
+    SKP_int   i, k, lag = 0, start_idx, sLTP_buf_idx, NLSF_interpolation_flag, sigtype;
     SKP_int16 *A_Q12, *B_Q14, *pxq, A_Q12_tmp[ MAX_LPC_ORDER ];
     SKP_int16 sLTP[ MAX_FRAME_LENGTH ];
     SKP_int32 LTP_pred_Q14, Gain_Q16, inv_gain_Q16, inv_gain_Q32, gain_adj_Q16, rand_seed, offset_Q10, dither;
@@ -93,7 +93,6 @@ void SKP_Silk_decode_core(
         SKP_memcpy( A_Q12_tmp, A_Q12, psDec->LPC_order * sizeof( SKP_int16 ) ); 
         B_Q14         = &psDecCtrl->LTPCoef_Q14[ k * LTP_ORDER ];
         Gain_Q16      = psDecCtrl->Gains_Q16[ k ];
-        LTP_scale_Q14 = psDecCtrl->LTP_scale_Q14;
         sigtype       = psDecCtrl->sigtype;
 
         inv_gain_Q16 = SKP_INVERSE32_varQ( SKP_max( Gain_Q16, 1 ), 32 );
@@ -114,7 +113,6 @@ void SKP_Silk_decode_core(
         
             sigtype = SIG_TYPE_VOICED;
             psDecCtrl->pitchL[ k ] = psDec->lagPrev;
-            LTP_scale_Q14 = ( SKP_int )1 << 14;
         }
 
         if( sigtype == SIG_TYPE_VOICED ) {
@@ -254,7 +252,7 @@ SKP_int		subfr_length
                 vec_Q10[ i ] = SKP_ADD32( pres_Q10[ i ], LPC_pred_Q10 );
                 
                 /* Update states */
-                sLPC_Q14[ MAX_LPC_ORDER + i ] = SKP_LSHIFT( vec_Q10[ i ], 4 );
+                sLPC_Q14[ MAX_LPC_ORDER + i ] = SKP_LSHIFT_ovflw( vec_Q10[ i ], 4 );
             }
         } else {
             SKP_assert( LPC_order == 10 );
@@ -280,7 +278,7 @@ SKP_int		subfr_length
                 vec_Q10[ i ] = SKP_ADD32( pres_Q10[ i ], LPC_pred_Q10 );
                 
                 /* Update states */
-                sLPC_Q14[ MAX_LPC_ORDER + i ] = SKP_LSHIFT( vec_Q10[ i ], 4 );
+                sLPC_Q14[ MAX_LPC_ORDER + i ] = SKP_LSHIFT_ovflw( vec_Q10[ i ], 4 );
             }
         }
 #else
@@ -306,7 +304,7 @@ SKP_int		subfr_length
             vec_Q10[ i ] = SKP_ADD32( pres_Q10[ i ], LPC_pred_Q10 );
             
             /* Update states */
-            sLPC_Q14[ MAX_LPC_ORDER + i ] = SKP_LSHIFT( vec_Q10[ i ], 4 );
+            sLPC_Q14[ MAX_LPC_ORDER + i ] = SKP_LSHIFT_ovflw( vec_Q10[ i ], 4 );
         }
 #endif
 }

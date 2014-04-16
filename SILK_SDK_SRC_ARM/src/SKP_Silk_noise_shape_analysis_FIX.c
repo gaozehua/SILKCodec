@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -153,8 +153,6 @@ void SKP_Silk_noise_shape_analysis_FIX(
     SKP_int16   x_windowed[    SHAPE_LPC_WIN_MAX ];
     const SKP_int16 *x_ptr, *pitch_res_ptr;
 
-    SKP_int32   sqrt_nrg[ NB_SUBFR ], Qnrg_vec[ NB_SUBFR ];
-
     /* Point to start of first LPC analysis block */
     x_ptr = x - psEnc->sCmn.la_shape;
 
@@ -268,11 +266,11 @@ void SKP_Silk_noise_shape_analysis_FIX(
         flat_part = psEnc->sCmn.fs_kHz * 5;
         slope_part = SKP_RSHIFT( psEnc->sCmn.shapeWinLength - flat_part, 1 );
 
-        SKP_Silk_apply_sine_window_new( x_windowed, x_ptr, 1, slope_part );
+        SKP_Silk_apply_sine_window( x_windowed, x_ptr, 1, slope_part );
         shift = slope_part;
         SKP_memcpy( x_windowed + shift, x_ptr + shift, flat_part * sizeof(SKP_int16) );
         shift += flat_part;
-        SKP_Silk_apply_sine_window_new( x_windowed + shift, x_ptr + shift, 2, slope_part );
+        SKP_Silk_apply_sine_window( x_windowed + shift, x_ptr + shift, 2, slope_part );
         
         /* Update pointer: next LPC analysis block */
         x_ptr += psEnc->sCmn.subfr_length;
@@ -308,9 +306,6 @@ void SKP_Silk_noise_shape_analysis_FIX(
 
         tmp32 = SKP_Silk_SQRT_APPROX( nrg );
         Qnrg >>= 1;             // range: -6...15
-
-        sqrt_nrg[ k ] = tmp32;
-        Qnrg_vec[ k ] = Qnrg;
 
         psEncCtrl->Gains_Q16[ k ] = SKP_LSHIFT_SAT32( tmp32, 16 - Qnrg );
 

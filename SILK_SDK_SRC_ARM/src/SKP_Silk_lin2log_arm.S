@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -30,15 +30,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SKP_Silk_AsmPreproc.h"
 #if EMBEDDED_ARM>=5
 
-val_lz				.req 	r1
-val_shift			.req	r2
-val_frac			.req	r3
+	VARDEF val_lz, r1
+	VARDEF val_shift, r2
+	VARDEF val_frac, r3
 
-val_ret1			.req	r1
-val_128minfrac		.req	r2
-val_mul_ret			.req	r0
-val_add_ret			.req	r3
-const1				.req	r1
+	VARDEF val_ret1, r1
+	VARDEF val_128minfrac, r2
+	VARDEF val_mul_ret, r0
+	VARDEF val_add_ret, r3
+	VARDEF const1, r1
 
 .globl	SYM(SKP_Silk_lin2log)
 SYM(SKP_Silk_lin2log):
@@ -48,9 +48,19 @@ SYM(SKP_Silk_lin2log):
 	clz		val_lz, r0											/*lz*/
 	cmp		val_lz, #24
 	sub		val_shift, val_lz, #24
+#ifdef _WINRT
+	bge		LR(0, f)
+	rsb		val_shift, val_lz, #24
+	mov		val_frac, r0, asr val_shift
+	b		LR(1, f)
+L(0)	
+	mov		val_frac, r0, lsl val_shift
+L(1)	
+#else	
 	rsblt	val_shift, val_lz, #24
 	movlt	val_frac, r0, asr val_shift
 	movge	val_frac, r0, lsl val_shift
+#endif	
 	and		val_frac, val_frac, #0x7F							/*frac_Q7*/
 	
 	rsb		val_ret1, val_lz, #31								/*31-lz*/
@@ -64,16 +74,16 @@ SYM(SKP_Silk_lin2log):
 	ldmia	sp!,  {r4-r5, fp, ip, pc}
 	
 #elif EMBEDDED_ARM>=4
-val_lz				.req 	r0
-val_in				.req	r4
-val_shift			.req	r1
-val_frac			.req	r2
-val_ret1			.req	r1
-val_128minfrac		.req	r3
-val_mul_ret			.req	r3
-tmp0				.req	r4
-const1				.req	r2
-val_ret				.req	r0
+	VARDEF val_lz, r0
+	VARDEF val_in, r4
+	VARDEF val_shift, r1
+	VARDEF val_frac, r2
+	VARDEF val_ret1, r1
+	VARDEF val_128minfrac, r3
+	VARDEF val_mul_ret, r3
+	VARDEF tmp0, r4
+	VARDEF const1, r2
+	VARDEF val_ret, r0
 
 .globl	SYM(SKP_Silk_lin2log)
 SYM(SKP_Silk_lin2log):
@@ -99,6 +109,6 @@ SYM(SKP_Silk_lin2log):
 	smlal	tmp0, val_ret, val_mul_ret, const1
 	
 	ldmia	sp!,  {r4-r5, fp, ip, pc}
-
 #endif
+	END
 #endif

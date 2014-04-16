@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -179,8 +179,15 @@ void SKP_Silk_NSQ_wrapper_FLP(
 
     /* Convert control struct to fix control struct */
     /* Noise shape parameters */
-    for( i = 0; i < NB_SUBFR * MAX_SHAPE_LPC_ORDER; i++ ) {
-        AR2_Q13[ i ] = SKP_float2int( psEncCtrl->AR2[ i ] * 8192.0f );
+    for( i = 0; i < NB_SUBFR; i++ ) {
+        /* Convert only the data in use */
+        for( j = 0; j < psEnc->sCmn.shapingLPCOrder; j++ ) {
+           AR2_Q13[ i * MAX_SHAPE_LPC_ORDER + j ] = SKP_float2int( psEncCtrl->AR2[ i * MAX_SHAPE_LPC_ORDER + j ] * 8192.0f );
+        }
+        /* Clear the rest only to get rid of analysis tool warnings */
+        for( ; j < MAX_SHAPE_LPC_ORDER; j++ ) {
+           AR2_Q13[ i * MAX_SHAPE_LPC_ORDER + j ] = 0;
+        }
     }
 
     for( i = 0; i < NB_SUBFR; i++ ) {
@@ -197,8 +204,12 @@ void SKP_Silk_NSQ_wrapper_FLP(
     }
 
     for( j = 0; j < NB_SUBFR >> 1; j++ ) {
-        for( i = 0; i < MAX_LPC_ORDER; i++ ) {
+        for( i = 0; i < psEnc->sCmn.predictLPCOrder; i++ ) {
             PredCoef_Q12[ j ][ i ] = ( SKP_int16 )SKP_float2int( psEncCtrl->PredCoef[ j ][ i ] * 4096.0f );
+        }
+        /* Clear the rest only to get rid of analysis tool warnings */
+        for( ; i < MAX_LPC_ORDER; i++ ) {
+            PredCoef_Q12[ j ][ i ] = 0;
         }
     }
 
@@ -223,21 +234,21 @@ void SKP_Silk_NSQ_wrapper_FLP(
     /* Call NSQ */
     if( useLBRR ) {
         if( psEnc->sCmn.nStatesDelayedDecision > 1 || psEnc->sCmn.warping_Q16 > 0 ) {
-            SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sNSQ_LBRR, 
+            SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sCmn.sNSQ_LBRR, 
                 x_16, q, psEncCtrl->sCmn.NLSFInterpCoef_Q2, PredCoef_Q12[ 0 ], LTPCoef_Q14, AR2_Q13, 
                 HarmShapeGain_Q14, Tilt_Q14, LF_shp_Q14, Gains_Q16, Lambda_Q10, LTP_scale_Q14 );
         } else {
-            SKP_Silk_NSQ( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sNSQ_LBRR, 
+            SKP_Silk_NSQ( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sCmn.sNSQ_LBRR, 
                 x_16, q, psEncCtrl->sCmn.NLSFInterpCoef_Q2, PredCoef_Q12[ 0 ], LTPCoef_Q14, AR2_Q13, 
                 HarmShapeGain_Q14, Tilt_Q14, LF_shp_Q14, Gains_Q16, Lambda_Q10, LTP_scale_Q14 );
         }
     } else {
         if( psEnc->sCmn.nStatesDelayedDecision > 1 || psEnc->sCmn.warping_Q16 > 0 ) {
-            SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sNSQ, 
+            SKP_Silk_NSQ_del_dec( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sCmn.sNSQ, 
                 x_16, q, psEncCtrl->sCmn.NLSFInterpCoef_Q2, PredCoef_Q12[ 0 ], LTPCoef_Q14, AR2_Q13, 
                 HarmShapeGain_Q14, Tilt_Q14, LF_shp_Q14, Gains_Q16, Lambda_Q10, LTP_scale_Q14 );
         } else {
-            SKP_Silk_NSQ( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sNSQ, 
+            SKP_Silk_NSQ( &psEnc->sCmn, &psEncCtrl->sCmn, &psEnc->sCmn.sNSQ, 
                 x_16, q, psEncCtrl->sCmn.NLSFInterpCoef_Q2, PredCoef_Q12[ 0 ], LTPCoef_Q14, AR2_Q13, 
                 HarmShapeGain_Q14, Tilt_Q14, LF_shp_Q14, Gains_Q16, Lambda_Q10, LTP_scale_Q14 );
         }

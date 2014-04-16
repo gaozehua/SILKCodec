@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -95,7 +95,7 @@ SKP_int SKP_Silk_pitch_analysis_core(  /* O    Voicing estimate: 0 voiced, 1 unv
     SKP_int32 crosscorr_st3[ PITCH_EST_NB_SUBFR ][ PITCH_EST_NB_CBKS_STAGE3_MAX ][ PITCH_EST_NB_STAGE3_LAGS ];
     SKP_int32 lag_counter;
     SKP_int   frame_length, frame_length_8kHz, frame_length_4kHz, max_sum_sq_length;
-    SKP_int   sf_length, sf_length_8kHz, sf_length_4kHz;
+    SKP_int   sf_length, sf_length_8kHz;
     SKP_int   min_lag, min_lag_8kHz, min_lag_4kHz;
     SKP_int   max_lag, max_lag_8kHz, max_lag_4kHz;
     SKP_int32 contour_bias, diff;
@@ -118,7 +118,6 @@ SKP_int SKP_Silk_pitch_analysis_core(  /* O    Voicing estimate: 0 voiced, 1 unv
     frame_length_4kHz = PITCH_EST_FRAME_LENGTH_MS * 4;
     frame_length_8kHz = PITCH_EST_FRAME_LENGTH_MS * 8;
     sf_length         = SKP_RSHIFT( frame_length,      3 );
-    sf_length_4kHz    = SKP_RSHIFT( frame_length_4kHz, 3 );
     sf_length_8kHz    = SKP_RSHIFT( frame_length_8kHz, 3 );
     min_lag           = PITCH_EST_MIN_LAG_MS * Fs_kHz;
     min_lag_4kHz      = PITCH_EST_MIN_LAG_MS * 4;
@@ -250,7 +249,7 @@ SKP_int SKP_Silk_pitch_analysis_core(  /* O    Voicing estimate: 0 voiced, 1 unv
     for( i = 0; i < length_d_srch; i++ ) {
         /* Convert to 8 kHz indices for the sorted correlation that exceeds the threshold */
         if( C[ 0 ][ min_lag_4kHz + i ] > threshold ) {
-            d_srch[ i ] = SKP_LSHIFT( d_srch[ i ] + min_lag_4kHz, 1 );
+            d_srch[ i ] = ( d_srch[ i ] + min_lag_4kHz ) << 1;
         } else {
             length_d_srch = i;
             break;

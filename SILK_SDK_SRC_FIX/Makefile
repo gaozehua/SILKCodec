@@ -1,14 +1,13 @@
 #					
 # Makefile for Silk SDK			
 #
-# Copyright (c) 2010, Skype Limited
+# Copyright (c) 2012, Skype Limited
 # All rights reserved.
 #
 
 #Platform detection and settings
 
 BUILD_OS := $(shell uname | sed -e 's/^.*Darwin.*/MacOS-X/ ; s/^.*CYGWIN.*/Windows/')
-
 BUILD_ARCHITECTURE := $(shell uname -m | sed -e 's/i686/i386/')
 
 EXESUFFIX = 
@@ -35,7 +34,7 @@ LDFLAGS += $(call ldflags-from-ldlibdirs,$(LDLIBDIRS))
 LDLIBS  += $(call ldlibs-from-libs,$(LIBS))
 
 COMPILE.c.cmdline   = $(CC) -c $(CFLAGS) -o $@ $<
-LINK.o.cmdline      = $(LINK.o) -lm $^ $(LDLIBS) -o $@$(EXESUFFIX) 
+LINK.o.cmdline      = $(LINK.o) $^ $(LDLIBS) -lm -o $@$(EXESUFFIX) 
 ARCHIVE.cmdline     = $(AR) $(ARFLAGS) $@ $^ && $(RANLIB) $@
 
 %$(OBJSUFFIX):%.c

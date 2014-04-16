@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -31,13 +31,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if EMBEDDED_ARM>=5
 
-len				.req	r4
-S_0				.req	r5
-S_1				.req	r6
-in0				.req	_r7
-out32				.req	r8
-A_Q140				.req	sb
-A_Q141				.req	sl
+	VARDEF	len, r4
+	VARDEF	S_0, r5
+	VARDEF	S_1, r6
+	VARDEF	in0, _r7
+	VARDEF	out32, r8
+	VARDEF	A_Q140, sb
+	VARDEF	A_Q141, sl
 
 .set	sp_S, 0 
 .globl	SYM(SKP_Silk_resampler_private_AR2)
@@ -54,9 +54,9 @@ SYM(SKP_Silk_resampler_private_AR2):
 	ldrsh	A_Q140, [r3], #2
 	ldrsh	A_Q141, [r3]
 	cmp	len, #0
-	beq	1f
+	beq	LR(1, f)
 
-0:
+L(0)
 	ldrsh	in0, [r2], #2
 	add	out32, S_0, in0, lsl #8
 	str	out32, [r1], #4
@@ -64,12 +64,13 @@ SYM(SKP_Silk_resampler_private_AR2):
 	mov	out32, out32, lsl #2
 	smlawb	S_0, out32, A_Q140, S_1
 	smulwb	S_1, out32, A_Q141
-	bgt	0b	
+	bgt	LR(0, b)	
 	
 	str	S_0, [r0], #4
 	str	S_1, [r0]
-1:	
+L(1)	
 	add		sp, sp, #4
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
+	END
 #endif
 #endif

@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -30,11 +30,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SKP_Silk_AsmPreproc.h"
 #if EMBEDDED_ARM>=6
 
-y32			.req	r3
-pn1			.req	r4
-pn2			.req	r5
-lo			.req	r6
-hi			.req	r8
+	VARDEF y32, r3
+	VARDEF pn1, r4
+	VARDEF pn2, r5
+	VARDEF lo, r6
+	VARDEF hi, r8
 .globl	SYM(SKP_Silk_A2NLSF_eval_poly)
 SYM(SKP_Silk_A2NLSF_eval_poly):
 	stmdb	sp!,  {r4-r8, fp, ip, lr}
@@ -42,28 +42,28 @@ SYM(SKP_Silk_A2NLSF_eval_poly):
 	add		r0, r0, r2, lsl #2
 	ldr		y32, [r0], #-4
 	tst		r2, #1
-	beq		1f
+	beq		LR(1, f)
 	ldr		pn1, [r0], #-4
 	sub		r2, r2, #1
 	mov		r1, r1, lsl #4
-0:
+L(0)
 	smull	lo, hi, y32, r1
 	subs	r2, r2, #1
 	add		y32, pn1, hi, lsl #16
 	ldr		pn1, [r0], #-4
 	add		y32, y32, lo, lsr #16
-	bgt		0b
+	bgt		LR(0, b)
 	smull	lo, hi, y32, r1
 	add		y32, pn1, hi, lsl #16
 	add		r0, y32, lo, lsr #16
 	ldmia	sp!,  {r4-r8, fp, ip, pc}
 
-1:/*EVEN:*/
+L(1)/*EVEN:*/
 	add		r0, r0, #4
 	ldmdb	r0!, {pn1, pn2}
 	sub		r2, r2, #2
 	mov		r1, r1, lsl #4
-0:
+L(0)
 	smull	lo, hi, y32, r1
 	subs	r2, r2, #2
 	add		y32, pn2, hi, lsl #16
@@ -72,7 +72,7 @@ SYM(SKP_Silk_A2NLSF_eval_poly):
 	add		y32, pn1, hi, lsl #16
 	ldmdb	r0!, {pn1, pn2}
 	add		y32, y32, lo, lsr #16
-	bgt		0b
+	bgt		LR(0, b)
 	smull	lo, hi, y32, r1
 	add		y32, pn2, hi, lsl #16
 	add		y32, y32, lo, lsr #16
@@ -80,6 +80,6 @@ SYM(SKP_Silk_A2NLSF_eval_poly):
 	add		y32, pn1, hi, lsl #16
 	add		r0, y32, lo, lsr #16
 	ldmia	sp!,  {r4-r8, fp, ip, pc}
-	
+	END
 #endif
 #endif

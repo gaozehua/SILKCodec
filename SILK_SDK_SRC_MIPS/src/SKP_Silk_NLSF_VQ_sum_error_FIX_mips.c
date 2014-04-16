@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -27,7 +27,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SKP_Silk_main_FIX.h"
 
-#if defined(EMBEDDED_MIPS)
+#if defined(__mips__)
+
 
 // LPC_order: 10, 16
 // K: 8, 16, 32, 64, 128
@@ -59,7 +60,7 @@ void SKP_Silk_NLSF_VQ_sum_error_FIX(
         cb_vec_Q15 = pCB_Q15;
         for( i = 0; i < K; i++ ) {
 
-asm volatile (
+__asm__ volatile (
 ".set	push		\n\t"
 ".set	noreorder	\n\t"
 /* Prologue for m = 1, 0 */

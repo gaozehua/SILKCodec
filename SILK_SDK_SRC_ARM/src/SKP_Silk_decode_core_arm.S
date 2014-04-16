@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -25,8 +25,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
 
-#if defined(__arm__)
-
 #include "SKP_Silk_AsmPreproc.h"
 
 #define MAX_LPC_ORDER			16
@@ -35,24 +33,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if EMBEDDED_ARM >= 5
 
-ptr_vec_Q10		.req	r0
-ptr_pres_Q10		.req	r1
-ptr_sLPC_Q14		.req	r2
-ptr_A_Q12_tmp		.req	r3
-ptr_LPC_Q14		.req	r4
-val1_LPC_Q14		.req	r5
-val_pres_Q10		.req	r5
-val2_LPC_Q14		.req	r6
-val_vec_Q10		.req	r6
-val3_LPC_Q14		.req	r8
-val4_LPC_Q14		.req	sb
-val1_Atmp		.req	sl
-val_LPC_Q14		.req	sl
-val2_Atmp		.req	ip
+	VARDEF ptr_vec_Q10, r0
+	VARDEF ptr_pres_Q10, r1
+	VARDEF ptr_sLPC_Q14, r2
+	VARDEF ptr_A_Q12_tmp, r3
+	VARDEF ptr_LPC_Q14, r4
+	VARDEF val1_LPC_Q14, r5
+	VARDEF val_pres_Q10, r5
+	VARDEF val2_LPC_Q14, r6
+	VARDEF val_vec_Q10, r6
+	VARDEF val3_LPC_Q14, r8
+	VARDEF val4_LPC_Q14, sb
+	VARDEF val1_Atmp, sl
+	VARDEF val_LPC_Q14, sl
+	VARDEF val2_Atmp, ip
 
-val_subfr_length	.req	_r7
-val_LPC_order		.req	lr
-val_LPC_pred_Q10	.req	lr
+	VARDEF val_subfr_length, _r7
+	VARDEF val_LPC_order, lr
+	VARDEF val_LPC_pred_Q10, lr
 
 .globl	SYM(SKP_Silk_decode_short_term_prediction)
 SYM(SKP_Silk_decode_short_term_prediction):
@@ -66,11 +64,11 @@ SYM(SKP_Silk_decode_short_term_prediction):
 	ldr	val_subfr_length, [sp, #ptr_subfr_length]
 	ands	val1_Atmp, ptr_A_Q12_tmp, #3
 	add	ptr_sLPC_Q14, ptr_sLPC_Q14, #MAX_LPC_ORDER_INT32_OFFSET
-	bne	2f
+	bne	LR(2, f)
 	cmp	val_LPC_order, #16
-	bne	1f
+	bne	LR(1, f)
 /*LPC_order == 16*/
-0:
+L(0)
 	mov	ptr_LPC_Q14, ptr_sLPC_Q14
 	ldmia	ptr_A_Q12_tmp!, {val1_Atmp, val2_Atmp}
 	ldmdb	ptr_LPC_Q14!, {val1_LPC_Q14, val2_LPC_Q14}
@@ -112,12 +110,12 @@ SYM(SKP_Silk_decode_short_term_prediction):
 	mov	val_LPC_Q14, val_vec_Q10, lsl #4
 	str	val_vec_Q10, [ptr_vec_Q10], #4
 	str	val_LPC_Q14, [ptr_sLPC_Q14], #4
-	bgt	0b
+	bgt	LR(0, b)
 
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
 
 /*LPC_order == 10*/
-1:
+L(1)
 	mov	ptr_LPC_Q14, ptr_sLPC_Q14
 	ldr	val2_Atmp, [ptr_A_Q12_tmp], #4
 	ldr	val1_Atmp, [ptr_A_Q12_tmp], #4
@@ -148,15 +146,15 @@ SYM(SKP_Silk_decode_short_term_prediction):
 	mov	val_LPC_Q14, val_vec_Q10, lsl #4
 	str	val_vec_Q10, [ptr_vec_Q10], #4
 	str	val_LPC_Q14, [ptr_sLPC_Q14], #4
-	bgt	1b
+	bgt	LR(1, b)
 
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
 
-2:
+L(2)
 	cmp	val_LPC_order, #16
-	bne	4f
+	bne	LR(4, f)
 /*LPC_order == 16*/
-3:
+L(3)
 	mov	ptr_LPC_Q14, ptr_sLPC_Q14
 	ldrh	val1_Atmp, [ptr_A_Q12_tmp], #2
 	ldr	val2_Atmp, [ptr_A_Q12_tmp], #4
@@ -205,12 +203,12 @@ SYM(SKP_Silk_decode_short_term_prediction):
 	mov	val_LPC_Q14, val_vec_Q10, lsl #4
 	str	val_vec_Q10, [ptr_vec_Q10], #4
 	str	val_LPC_Q14, [ptr_sLPC_Q14], #4
-	bgt	3b
+	bgt	LR(3, b)
 
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
 
 /*LPC_order == 10*/
-4:
+L(4)
 	mov	ptr_LPC_Q14, ptr_sLPC_Q14
 	ldrh	val2_Atmp, [ptr_A_Q12_tmp], #2
 	ldr	val1_Atmp, [ptr_A_Q12_tmp], #4
@@ -243,10 +241,8 @@ SYM(SKP_Silk_decode_short_term_prediction):
 	mov	val_LPC_Q14, val_vec_Q10, lsl #4
 	str	val_vec_Q10, [ptr_vec_Q10], #4
 	str	val_LPC_Q14, [ptr_sLPC_Q14], #4
-	bgt	4b
+	bgt	LR(4, b)
 
 	ldmia	sp!,  {r4-r10, fp, ip, pc}
-
+	END
 #endif
-#endif
-

@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -71,8 +71,14 @@ extern SKP_int32 SKP_Silk_CLZ32(SKP_int32 in32);
 
 SKP_INLINE SKP_int64 SKP_SMLAL(SKP_int64 a64, SKP_int32 b32, SKP_int32 c32)
 {
+#ifdef IPHONE
+    // IPHONE LLVM compiler doesn't understand Q/R representation. 
+    a64 = (SKP_int64)b32 * c32;
+    return(a64);
+#else
 	__asm__ __volatile__ ("smlal %Q0, %R0, %2, %3" : "=r" (a64) : "0" (a64), "r" (b32), "r" (c32));	
 	return(a64);
+#endif    
 }
 
 // (a32 * b32) >> 16
@@ -89,6 +95,9 @@ SKP_INLINE SKP_int64 SKP_SMLAL(SKP_int64 a64, SKP_int32 b32, SKP_int32 c32)
 #define SKP_SUB_SAT32(a, b)				((((a)-(b)) & 0x80000000) == 0 ?										\
 										(( (a) & ((b)^0x80000000) & 0x80000000) ? SKP_int32_MIN : (a)-(b)) :	\
 										((((a)^0x80000000) & (b)  & 0x80000000) ? SKP_int32_MAX : (a)-(b)) )
+
+#define SKP_SMMUL(a32, b32)				(SKP_int32)SKP_RSHIFT64(SKP_SMULL((a32), (b32)), 32)
+
 
 #else
 SKP_INLINE SKP_int32 SKP_SMULWB(SKP_int32 a32, SKP_int32 b32) {
@@ -150,8 +159,14 @@ SKP_INLINE SKP_int32 SKP_SMLABT(SKP_int32 a32, SKP_int32 b32, SKP_int32 c32) {
 
 SKP_INLINE SKP_int64 SKP_SMLAL(SKP_int64 a64, SKP_int32 b32, SKP_int32 c32)
 {
+#ifdef IPHONE
+    // IPHONE LLVM compiler doesn't understand Q/R representation. 
+    a64 = (SKP_int64)b32 * c32;
+    return(a64);
+#else
 	__asm__ __volatile__ ("smlal %Q0, %R0, %2, %3" : "=r" (a64) : "0" (a64), "r" (b32), "r" (c32));	
 	return(a64);
+#endif    
 }
 
 #define SKP_SMULWW(a32, b32)			SKP_MLA(SKP_SMULWB((a32), (b32)), (a32), SKP_RSHIFT_ROUND((b32), 16))
@@ -186,7 +201,7 @@ SKP_INLINE SKP_int32 SKP_SUB_SAT32(SKP_int32 a32, SKP_int32 b32) {
 SKP_INLINE SKP_int32 SKP_Silk_CLZ16(SKP_int16 in16)
 {
 	SKP_int32 out32;
-	__asm__ __volatile__ ("movs %0, %1, lsl #16 \n\tclz %0, %0 \n\tmoveq %0, #16" : "=r" (out32) : "r" (in16) : "cc");	
+	__asm__ __volatile__ ("movs %0, %1, lsl #16 \n\tclz %0, %0 \n\t it eq \n\t moveq %0, #16" : "=r" (out32) : "r" (in16) : "cc");	
 	return(out32);
 }
 
@@ -196,12 +211,20 @@ SKP_INLINE SKP_int32 SKP_Silk_CLZ32(SKP_int32 in32)
 	__asm__ __volatile__ ("clz %0, %1" : "=r" (out32) : "r" (in32));	
 	return(out32);
 }
-
+#if EMBEDDED_ARM < 6
+#define SKP_SMMUL(a32, b32)				(SKP_int32)SKP_RSHIFT64(SKP_SMULL((a32), (b32)), 32)
+#endif
 #endif
 
 // Some ARMv6 specific instructions:
 
 #if EMBEDDED_ARM>=6
+
+SKP_INLINE SKP_int32 SKP_SMMUL(SKP_int32 a32, SKP_int32 b32){			
+	SKP_int32 out32;
+	__asm__ __volatile__ ("smmul %0, %1, %2" : "=r" (out32) : "r" (a32), "r" (b32));	
+	return(out32);
+}
 
 SKP_INLINE SKP_int32 SKP_SMUAD(SKP_int32 a32, SKP_int32 b32)
 {

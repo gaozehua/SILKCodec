@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -140,8 +140,8 @@ SKP_int SKP_Silk_encode_frame_FLP(
         if( psEnc->sCmn.noSpeechCounter > NO_SPEECH_FRAMES_BEFORE_DTX ) {
             psEnc->sCmn.inDTX = 1;
         }
-        if( psEnc->sCmn.noSpeechCounter > MAX_CONSECUTIVE_DTX ) {
-            psEnc->sCmn.noSpeechCounter = 0;
+        if( psEnc->sCmn.noSpeechCounter > MAX_CONSECUTIVE_DTX + NO_SPEECH_FRAMES_BEFORE_DTX ) {
+            psEnc->sCmn.noSpeechCounter = NO_SPEECH_FRAMES_BEFORE_DTX;
             psEnc->sCmn.inDTX           = 0;
         }
     } else {
@@ -310,7 +310,7 @@ void SKP_Silk_LBRR_encode_FLP(
         if( psEnc->sCmn.Complexity > 0 && psEnc->sCmn.TargetRate_bps > Rate_only_parameters ) {
             if( psEnc->sCmn.nFramesInPayloadBuf == 0 ) {
                 /* First frame in packet copy everything */
-                SKP_memcpy( &psEnc->sNSQ_LBRR, &psEnc->sNSQ, sizeof( SKP_Silk_nsq_state ) );
+                SKP_memcpy( &psEnc->sCmn.sNSQ_LBRR, &psEnc->sCmn.sNSQ, sizeof( SKP_Silk_nsq_state ) );
                 psEnc->sCmn.LBRRprevLastGainIndex = psEnc->sShape.LastGainIndex;
                 /* Increase Gains to get target LBRR rate */
                 psEncCtrl->sCmn.GainsIndices[ 0 ] += psEnc->sCmn.LBRR_GainIncreases;

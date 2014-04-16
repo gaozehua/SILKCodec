@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -28,8 +28,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* Insertion sort (fast for already almost sorted arrays):   */
 /* Best case:  O(n)   for an already sorted array            */
 /* Worst case: O(n^2) for an inversely sorted array          */
-/*                                                           */
-/* Shell short:    http://en.wikipedia.org/wiki/Shell_sort   */
 
 #include "SKP_Silk_SigProc_FIX.h"
 
@@ -145,4 +143,5 @@ void SKP_Silk_insertion_sort_increasing_all_values(
         a[ j + 1 ] = value; /* Write value */
     }
 }
+
 

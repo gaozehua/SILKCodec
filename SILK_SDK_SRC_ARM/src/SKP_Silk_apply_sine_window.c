@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -43,8 +43,8 @@ static SKP_int16 freq_table_Q16[ 27 ] = {
     2313,    2214,    2123,    2038,    1961,    1889,    1822,    1760,    1702,
 };
 
-
-void SKP_Silk_apply_sine_window_new(
+//#if EMBEDDED_ARM<6
+void SKP_Silk_apply_sine_window(
     SKP_int16                        px_win[],            /* O    Pointer to windowed signal                  */
     const SKP_int16                  px[],                /* I    Pointer to input signal                     */
     const SKP_int                    win_type,            /* I    Selects a window type                       */
@@ -117,4 +117,4 @@ void SKP_Silk_apply_sine_window_new(
     }
 #endif
 }
-
+//#endif

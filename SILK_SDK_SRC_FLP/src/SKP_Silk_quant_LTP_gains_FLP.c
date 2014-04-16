@@ -1,5 +1,5 @@
 /***********************************************************************
-Copyright (c) 2006-2011, Skype Limited. All rights reserved. 
+Copyright (c) 2006-2012, Skype Limited. All rights reserved. 
 Redistribution and use in source and binary forms, with or without 
 modification, (subject to the limitations in the disclaimer below) 
 are permitted provided that the following conditions are met:
@@ -39,7 +39,6 @@ void SKP_Silk_quant_LTP_gains_FLP(
 )
 {
     SKP_int             j, k, temp_idx[ NB_SUBFR ], cbk_size;
-    const SKP_uint16    *cdf_ptr;
     const SKP_int16     *cl_ptr;
     const SKP_int16     *cbk_ptr_Q14;
     const SKP_float     *b_ptr, *W_ptr;
@@ -53,7 +52,6 @@ void SKP_Silk_quant_LTP_gains_FLP(
     /***************************************************/
     min_rate_dist = SKP_float_MAX;
     for( k = 0; k < 3; k++ ) {
-        cdf_ptr     = SKP_Silk_LTP_gain_CDF_ptrs[     k ];
         cl_ptr      = SKP_Silk_LTP_gain_BITS_Q6_ptrs[ k ];
         cbk_ptr_Q14 = SKP_Silk_LTP_vq_ptrs_Q14[       k ];
         cbk_size    = SKP_Silk_LTP_vq_sizes[          k ];
